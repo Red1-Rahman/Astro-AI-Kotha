@@ -17,13 +17,13 @@ The FAQ knowledge base is authoritative. The system does not generate unsupporte
 ### Text
 
 ```text
-text → FAQ matching → answer
+text → language detection → sanitizer → FAQ matching → answer
 ```
 
 ### English Voice
 
 ```text
-audio → STT → FAQ matching → answer → TTS
+audio → STT → language detection → English sanitizer → FAQ matching → answer → TTS
 ```
 
 ### Bangla / Banglish Voice
@@ -32,14 +32,30 @@ audio → STT → FAQ matching → answer → TTS
 audio
 → STT
 → language detection
+→ language-specific sanitizer
 → Bangla/Banglish → English translation
+→ English sanitizer
 → FAQ matching
 → English answer
 → English → Bangla translation
 → TTS
 ```
 
-## 3. FAQ Matching
+## 3. Language Handling
+
+The system dynamically selects the sanitizer based on detected language.
+
+Supported sanitizers:
+
+* `english_sanitizer.py`
+* `bangla_sanitizer.py`
+* `banglish_sanitizer.py`
+
+Language detection and sanitizer selection are separate responsibilities.
+
+Sanitization removes language-specific conversational noise without removing domain-relevant terms.
+
+## 4. FAQ Matching
 
 * Knowledge base: `data/faqs.json`
 * NLP: spaCy
@@ -56,7 +72,7 @@ audio
 * Scores are normalized to `[0.0, 1.0]`.
 * Below-threshold matches return the fallback response.
 
-## 4. Contracts
+## 5. Contracts
 
 Primary Pydantic models:
 
@@ -69,9 +85,9 @@ Primary Pydantic models:
 
 Invalid FAQ data must fail validation during loading.
 
-## 5. Voice
+## 6. Voice
 
-Speech providers are isolated behind `speech/` interfaces.
+Speech providers are isolated behind `speech/`.
 
 Required operations:
 
@@ -82,15 +98,15 @@ Audio is processed in memory and is not persisted.
 
 Provider credentials must never be logged.
 
-## 6. Translation
+## 7. Translation
 
 Translation is isolated behind `translation/`.
 
-Translation is used only for Bangla/Banglish voice flows. English FAQ matching remains the authoritative retrieval path.
+Translation is used for Bangla/Banglish voice flows. English FAQ matching remains the authoritative retrieval path.
 
 BanglaBERT is experimental and is not part of the required V1 retrieval path.
 
-## 7. API
+## 8. API
 
 `POST /api/chat`
 
@@ -114,15 +130,16 @@ Output:
 
 The existing text-chat endpoint remains supported.
 
-## 8. Error Handling
+## 9. Error Handling
 
 * Invalid input → client error.
 * Invalid FAQ data → startup/load failure.
-* Speech provider failure → explicit voice error.
+* Unsupported language → explicit error.
+* Speech/translation provider failure → explicit error.
 * TTS failure must not discard an otherwise successful text answer.
 * Provider/API errors must not be silently ignored.
 
-## 9. Non-Goals
+## 10. Non-Goals
 
 V1 does not include:
 
