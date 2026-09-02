@@ -1,0 +1,427 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "FAQ Knowledge Base for Astro-AI Galaxy Evolution Analysis Platform",
+    "source": "CodeAlpha_astro-ai-chatbot",
+    "source_url": "https://github.com/Red1-Rahman/CodeAlpha_astro-ai-chatbot/blob/main/data/faqs.json",
+    "source_note": "FAQ dataset originally collected for the CodeAlpha_astro-ai-chatbot project and reused by Astro-AI-Kotha.",
+    "nlp_processor": "spacy",
+    "nlp_model": "en_core_web_sm",
+    "preprocessing_steps": [
+      "tokenization",
+      "lemmatization",
+      "stopword_removal",
+      "lowercase_normalization"
+    ],
+    "matching_algorithm": "tfidf_cosine_similarity",
+    "similarity_threshold": 0.4,
+    "total_faqs": 38,
+    "last_updated": "2026-09-02"
+  },
+  "faqs": [
+    {
+      "id": 1,
+      "category": "Installation & Setup",
+      "intent": "install_dependencies",
+      "question": "What are the system requirements for installing Astro-AI?",
+      "answer": "System Requirements:\n• Python: 3.10 or higher\n• Operating System: Linux (recommended), Windows (limited), macOS\n• Memory: 4GB RAM minimum, 8GB+ recommended\n• Storage: 2GB free space for dependencies\n\nFor Streamlit Cloud deployment, the platform uses linux-64 (x86_64 architecture) Debian bookworm containers.",
+      "keywords": ["requirements", "python", "memory", "storage", "system"],
+      "entities": ["Python 3.10", "4GB RAM", "2GB storage"],
+      "related_ids": [2, 3, 4]
+    },
+    {
+      "id": 2,
+      "category": "Installation & Setup",
+      "intent": "install_dependencies",
+      "question": "How do I install Astro-AI from scratch?",
+      "answer": "Quick Start (Educational Use Only):\n\n1. Clone the repository:\n   git clone https://github.com/Red1-Rahman/Astro-AI.git\n   cd CAM-SUST2025\n\n2. Install dependencies:\n   pip install -r requirements.txt\n\n3. Launch the application:\n   streamlit run app.py\n\nFor production deployment with full scientific stack, see DEPLOYMENT.md.",
+      "keywords": ["install", "clone", "git", "pip", "requirements", "streamlit", "launch"],
+      "entities": ["requirements.txt", "app.py", "streamlit"],
+      "related_ids": [1, 3, 5]
+    },
+    {
+      "id": 3,
+      "category": "Installation & Setup",
+      "intent": "setup_dependencies",
+      "question": "What are the core dependencies for Astro-AI?",
+      "answer": "Core Dependencies:\n• Web Framework: Streamlit\n• Scientific Computing: NumPy, SciPy, Pandas\n• Astronomy: Astropy, Bagpipes\n• Visualization: Matplotlib, Seaborn\n• AI Integration: OpenAI API\n\nOptional Heavy Dependencies:\n• Cosmic Evolution: py21cmfast (for real 21cm simulations)\n• Kernel: h5py (HDF5 support)\n• JWST: jwst (STScI pipeline)\n• Tools: tools21cm (21cm analysis tools)\n\nUse feature_flags.py to detect which optional packages are available.",
+      "keywords": ["dependencies", "packages", "streamlit", "scientific", "optional"],
+      "entities": ["NumPy", "SciPy", "Pandas", "Astropy", "Bagpipes", "py21cmfast"],
+      "related_ids": [1, 2, 4]
+    },
+    {
+      "id": 4,
+      "category": "Installation & Setup",
+      "intent": "setup_bagpipes",
+      "question": "Why does Bagpipes need a special setup, and how do I configure it?",
+      "answer": "Bagpipes Quirks:\nBagpipes requires BAGPIPES_FILTERS and BAGPIPES_DATA environment variables pointing to valid directories. If these aren't set, Bagpipes initialization fails.\n\nAutomated Setup (app.py handles this):\nThe app automatically creates a writable temporary bagpipes_data directory in the system temp location (e.g., /tmp on Linux/macOS, C:\\Users\\*\\AppData\\Local\\Temp on Windows) and sets:\n• BAGPIPES_FILTERS = <system_temp>/bagpipes_data\n• BAGPIPES_DATA = <system_temp>/bagpipes_data\n• Mock config module loaded before any bagpipes import\n\nManual Setup (if needed):\n1. Run: python setup_bagpipes.py\n2. Or set environment variables before launching:\n   export BAGPIPES_DATA=/path/to/bagpipes_data\n   export BAGPIPES_FILTERS=/path/to/bagpipes_data",
+      "keywords": ["bagpipes", "setup", "environment", "variables", "configuration"],
+      "entities": ["BAGPIPES_FILTERS", "BAGPIPES_DATA", "setup_bagpipes.py"],
+      "related_ids": [3, 6, 12]
+    },
+    {
+      "id": 5,
+      "category": "Installation & Setup",
+      "intent": "deploy_streamlit_cloud",
+      "question": "How do I deploy Astro-AI to Streamlit Community Cloud?",
+      "answer": "Streamlit Cloud Deployment Steps:\n\n1. Create a secrets file at .streamlit/secrets.toml with:\n   OPENROUTER_API_KEY = \"sk-or-v1-...\"\n   OPENROUTER_MODEL = \"deepseek/deepseek-r1:free\"\n\n2. Create a packages.txt file listing system dependencies (apt-get installable).\n\n3. Link your GitHub repo to Streamlit Cloud:\n   • Go to streamlit.io/cloud\n   • Deploy from GitHub\n   • Streamlit automatically installs requirements.txt\n\n4. Monitor logs for scientific package installation.\n\nFor comprehensive deployment guidance, see DEPLOYMENT.md and FULL_DEPLOYMENT_STRATEGY.md.",
+      "keywords": ["deploy", "streamlit", "cloud", "secrets", "github"],
+      "entities": ["streamlit.io", "secrets.toml", "OPENROUTER_API_KEY"],
+      "related_ids": [2, 3, 19]
+    },
+    {
+      "id": 6,
+      "category": "User Interface Navigation",
+      "intent": "navigate_sidebar",
+      "question": "What are the main navigation modules in the sidebar?",
+      "answer": "Main Navigation Modules (Select in Sidebar):\n\n1. 🏠 Home - Overview and quick start\n2. 📊 Data Upload & Setup - Load data and configure cosmology parameters\n3. 🌌 Module 1: Cosmic Evolution (Cos-Evo) - 21cm simulations\n4. 🌟 Module 2: Cluster Environment Analyzer - Galaxy cluster analysis\n5. 🔭 Module 3: JWST Spectrum Analyzer - NIRSpec spectroscopy pipeline\n6. 📈 Comparative Dashboard - Integration across all modules\n7. 📝 Report & Reflection - Generate scientific insights\n\nSidebar also contains Environment Status with optional dependency detection.",
+      "keywords": ["navigation", "modules", "sidebar", "menu", "interface"],
+      "entities": ["Cosmic Evolution", "Cluster Analyzer", "JWST", "Dashboard"],
+      "related_ids": [7, 8, 9, 10]
+    },
+    {
+      "id": 7,
+      "category": "User Interface Navigation",
+      "intent": "upload_data",
+      "question": "Where do I upload my data in the interface?",
+      "answer": "Data Upload Location:\nNavigate to 📊 Data Upload & Setup tab in the sidebar.\n\nUpload Options:\n1. Galaxy Catalog (CSV/FITS)\n   - Required columns: RA, Dec, redshift, and photometric bands\n   - Supports both CSV and FITS formats\n\n2. JWST/NIRSpec File (FITS)\n   - Upload Stage 2 or Stage 3 JWST pipeline products\n   - Optional—demo data available\n\nAlternatively, load example datasets:\n• Load Cluster Sample (mock data)\n• Load Demo JWST Data (synthetic spectrum)\n• Set Default Cosmology\n\nAll data is cached in st.session_state for performance.",
+      "keywords": ["upload", "data", "csv", "fits", "catalog"],
+      "entities": ["CSV", "FITS", "RA", "Dec", "redshift"],
+      "related_ids": [6, 16, 17]
+    },
+    {
+      "id": 8,
+      "category": "User Interface Navigation",
+      "intent": "set_cosmology",
+      "question": "How do I set cosmological parameters in Astro-AI?",
+      "answer": "Setting Cosmological Parameters:\n\n1. Navigate to 📊 Data Upload & Setup → Cosmological Parameters tab\n\n2. Adjust parameters using sliders/input boxes:\n   • H₀ (km/s/Mpc): Typical range 50–100 (default: 67.66)\n   • Ωₘ (matter density): 0.1–0.9 (default: 0.31)\n   • σ₈ (matter amplitude): 0.6–1.2 (default: 0.8)\n   • Redshift Range: 0–20 Gyr (default: 5–15)\n\n3. Click \"💾 Save Cosmology\" to update session state.\n\n4. Preset Option: Click \"Default Cosmology\" to restore Planck 2018 values.\n\nThese parameters drive all 21cm simulations and cosmic evolution calculations.",
+      "keywords": ["cosmology", "parameters", "h0", "omega", "sigma8", "redshift"],
+      "entities": ["H₀", "Ωₘ", "σ₈", "Planck 2018"],
+      "related_ids": [6, 8, 9]
+    },
+    {
+      "id": 9,
+      "category": "21cm Cosmic Evolution Module",
+      "intent": "run_cosmic_evolution",
+      "question": "How do I run a 21cm cosmic evolution simulation?",
+      "answer": "Running 21cm Simulation:\n\n1. Navigate to 🌌 Module 1: Cosmic Evolution (Cos-Evo)\n\n2. Set simulation parameters:\n   • Box Size (Mpc): 50, 100, or 200\n   • Resolution (HII_DIM): 50, 100, or 128\n   • Start Redshift: typically 15–20\n   • End Redshift: typically 5–6\n   • Redshift Step: typically 0.5–1.0\n\n3. Click 🚀 Run 21cm Simulation\n   - Results are cached automatically\n   - Processing status shown with spinner\n\n4. Results displayed in three tabs:\n   • Global Signal: δTb vs redshift\n   • Power Spectra: Δ²(k) evolution at each redshift\n   • BT Slices: 2D brightness temperature at key redshifts\n\nNote: Uses py21cmfast if available, otherwise falls back to physically motivated analytic model.",
+      "keywords": ["simulation", "21cm", "redshift", "box", "resolution", "cosmic"],
+      "entities": ["py21cmfast", "brightness temperature", "HII_DIM", "δTb"],
+      "related_ids": [10, 11, 25]
+    },
+    {
+      "id": 10,
+      "category": "21cm Cosmic Evolution Module",
+      "intent": "understand_21cm_output",
+      "question": "What do the 21cm simulation outputs mean?",
+      "answer": "Understanding 21cm Outputs:\n\n1. Global Signal (δTb vs z):\n   • Measures sky-averaged 21cm brightness temperature\n   • Absorption trough near z~17–20 (Cosmic Dawn)\n   • Signal rises through z~6–15 (reionization)\n   • δTb is negative (absorption) or positive (emission)\n   • Units: milliKelvin (mK)\n\n2. Power Spectra (Δ²(k)):\n   • Dimensionless power: Δ² = k³P(k)/(2π²)\n   • Peak near k~0.1 Mpc⁻¹\n   • Amplitude sensitive to ionization fraction and spin temperature\n   • Colored lines represent different redshifts\n\n3. Brightness Temperature Slices:\n   • 2D maps of δTb at key redshifts\n   • Show spatial structure of reionization\n   • Color scale: red (hot/positive) to blue (cold/negative)\n\nReferences: Pritchard & Loeb (2012), Furlanetto et al. (2006), Cohen et al. (2017).",
+      "keywords": ["output", "signal", "power", "spectrum", "brightness", "temperature"],
+      "entities": ["δTb", "Δ²(k)", "Pritchard & Loeb", "Furlanetto"],
+      "related_ids": [9, 11, 25]
+    },
+    {
+      "id": 11,
+      "category": "21cm Cosmic Evolution Module",
+      "intent": "mock_vs_real",
+      "question": "What's the difference between mock and real 21cm simulations?",
+      "answer": "Mock vs Real 21cm Data:\n\nREAL Simulations (py21cmfast installed):\n• Uses full hydrodynamic 3D simulations\n• Accurate reionization physics\n• Computationally expensive\n• Takes minutes to hours\n• Label: None (unmarked)\n\nMOCK Simulations (py21cmfast unavailable):\n• Uses physically motivated analytic model\n• Parameterized from Pritchard & Loeb (2012) and Furlanetto et al. (2006)\n• Instant computation\n• All mock results clearly marked \"SIMULATED DATA\" in yellow box\n• Still scientifically valid for testing and learning\n\nKey equation (analytic model):\nδTb ≈ 27 x_HI (1 - T_CMB/T_S) × cosmological_factors [mK]\n\nTo run real simulations:\n1. Install py21cmfast: pip install py21cmfast\n2. Restart Streamlit: streamlit run app.py\n3. App auto-detects py21cmfast and switches modes.",
+      "keywords": ["mock", "real", "simulation", "analytic", "py21cmfast"],
+      "entities": ["py21cmfast", "Pritchard & Loeb", "SIMULATED DATA", "δTb"],
+      "related_ids": [9, 10, 25]
+    },
+    {
+      "id": 12,
+      "category": "Galaxy Cluster Analysis",
+      "intent": "run_cluster_analysis",
+      "question": "How do I run cluster analysis on galaxy data?",
+      "answer": "Running Cluster Analysis:\n\n1. Load cluster data:\n   • Upload CSV/FITS with columns: RA, Dec, redshift, stellar_mass, g_mag, r_mag\n   • OR click \"Load Cluster Sample\" for mock data (recommended for testing)\n\n2. Navigate to 🌟 Module 2: Cluster Environment Analyzer\n\n3. Three analysis tabs:\n   Tab 1 - Cluster Detection:\n   • Plot RA-Dec spatial distribution\n   • Detect clusters in redshift using gaussian_filter significance\n   • Significance threshold: default 3.0σ\n\n   Tab 2 - SED Fitting:\n   • Configure Bagpipes model (SFH, dust, metallicity)\n   • Run SED fitting with MultiNest (default n_live=400)\n   • Results include stellar mass, age, SFR, metallicity, dust Av\n\n   Tab 3 - Results:\n   • Red fraction vs stellar mass\n   • Environmental quenching efficiency\n   • Color-magnitude diagrams\n   • Stellar mass functions (SMF)\n\n4. Environmental effects quantified via Peng+2010 model:\n   • Additional red fraction in clusters: ~0.15 at fixed M*\n   • Quenching efficiency = (f_red_cluster - f_red_field) / (1 - f_red_field)\n\nNOTE: Mock data grounded in Baldry+2012 (field SMF) and Vulcani+2013 (cluster SMF).",
+      "keywords": ["cluster", "analysis", "detection", "redshift", "bagpipes", "sed"],
+      "entities": ["RA", "Dec", "stellar_mass", "Bagpipes", "SMF", "Peng+2010"],
+      "related_ids": [13, 14, 15, 16]
+    },
+    {
+      "id": 13,
+      "category": "Galaxy Cluster Analysis",
+      "intent": "understand_red_fraction",
+      "question": "What is the red fraction and why does it matter?",
+      "answer": "Red Fraction Explained:\n\nDefinition:\n• f_red = fraction of red galaxies out of total galaxies\n• Red galaxies identified by g–r color > 0.65 (Bell+2004)\n• Already quenched (low star formation rate)\n\nWhy It Matters:\n• Key indicator of galaxy quenching in different environments\n• Mass dependence: more massive galaxies more likely red\n• Environmental dependence: cluster galaxies more red than field\n• Test of galaxy evolution models\n\nPhysical Interpretation:\n• Environmental quenching in clusters suppresses star formation via:\n  - Ram-pressure stripping of gas\n  - Strangulation (prevention of gas accretion)\n  - Tidal interactions\n  - Harassment by cluster members\n\nPeng+2010 Model:\nf_red = 1 - (1 - ε_mass) × (1 - ε_env)\n• ε_mass: mass-quenching efficiency (logistic at M* ~ 10.5 M☉)\n• ε_env: environmental quenching (~0.15 in clusters)\n\nDashboard plots show red fraction vs stellar mass for cluster vs field galaxies.",
+      "keywords": ["red", "fraction", "quenching", "color", "environment", "mass"],
+      "entities": ["f_red", "g-r color", "Peng+2010", "Bell+2004", "0.65"],
+      "related_ids": [12, 14, 15]
+    },
+    {
+      "id": 14,
+      "category": "Galaxy Cluster Analysis",
+      "intent": "understand_smf",
+      "question": "What is the stellar mass function (SMF)?",
+      "answer": "Stellar Mass Function (SMF) Explained:\n\nDefinition:\nφ(M*) = number density of galaxies per unit volume per unit mass [Mpc⁻³ dex⁻¹]\n• Describes how many galaxies of each stellar mass exist\n• Key constraint on galaxy formation models\n\nDouble-Schechter Parameterization (Baldry+2012):\nφ(M*) = φ₁ × 10^[(1+α₁)(M-M*)]/2.5 × exp(-10^(M-M*)) + φ₂ × ... [two components]\n• Faint-end slope α₁ ≈ –0.35 (field)\n• Bright-end slope α₂ ≈ –1.47 (field)\n• Characteristic mass log(M*) ≈ 10.66 M☉\n\nCluster vs Field Differences (Vulcani+2013):\n• Cluster SMF shifted by +0.15 dex (more massive galaxies)\n• Steeper faint-end slope (fewer dwarf galaxies)\n• Due to environmental effects + starvation\n\nIn Astro-AI:\n• Module 2 plots observed vs theoretical SMF\n• Red vs blue SMF separately\n• Mock data honor these published relations\n\nReferences: Baldry et al. 2012, Vulcani et al. 2013.",
+      "keywords": ["mass", "function", "smf", "schechter", "dwarfs", "giants"],
+      "entities": ["SMF", "Baldry+2012", "Vulcani+2013", "Mpc⁻³ dex⁻¹", "log(M*)"],
+      "related_ids": [12, 13, 15]
+    },
+    {
+      "id": 15,
+      "category": "Galaxy Cluster Analysis",
+      "intent": "understand_sed_fitting",
+      "question": "How does SED fitting work in Astro-AI?",
+      "answer": "SED Fitting Pipeline (Bagpipes):\n\nWhat is SED?\n• Spectral Energy Distribution = flux vs wavelength\n• Optical + NIR photometry provides multi-band flux points\n• Input to SED fitting to constrain galaxy properties\n\nBagpipes Bayesian SED Fitting:\n• Uses MultiNest nested sampling for posterior inference\n• Flexible star formation history (SFH): exponential or double power-law\n• Includes nebular emission, dust attenuation, ISM parameters\n• Outputs posterior samples for stellar mass, age, SFR, metallicity, dust\n\nKey Parameters Fitted:\n• Redshift z (optionally)\n• Stellar mass log(M*/M☉) [M☉]\n• Age (Gyr)\n• Tau / metallicity (Z/Z☉)\n• Dust attenuation Av [mag], via Calzetti+2000 law\n• Star formation rate (SFR) [M☉/yr]\n\nConfiguration in UI (Module 2):\n• SFH Model: exponential (default) or double_power_law\n• Dust Curve: Calzetti (default), SMC, MW\n• Fit redshift? Option to fix or vary\n• Mass/age/metallicity priors customizable via sliders\n\nAccuracy:\n• Stellar mass recovery: ±0.15 dex (photometric accuracy)\n• Redshift: σ(z) ≈ 0.01 when spectroscopy available\n\nReference: Carnall et al. 2018 (Bagpipes), MNRAS 480, 4379.",
+      "keywords": ["sed", "fitting", "bagpipes", "bagpipes", "stellar", "mass"],
+      "entities": ["Bagpipes", "MultiNest", "Calzetti+2000", "Carnall+2018", "SFR"],
+      "related_ids": [12, 14, 16, 17]
+    },
+    {
+      "id": 16,
+      "category": "JWST Spectroscopy",
+      "intent": "run_jwst_analysis",
+      "question": "How do I analyze JWST NIRSpec data in Astro-AI?",
+      "answer": "JWST Spectroscopy Analysis:\n\n1. Load JWST Data:\n   • Navigate to 📊 Data Upload & Setup\n   • Upload FITS file (Stage 2 or Stage 3 product)\n   • OR click \"Load Demo JWST Data\" for synthetic spectrum\n\n2. Navigate to 🔭 Module 3: JWST Spectrum Analyzer\n\n3. Process data through three pipeline stages:\n   \n   Stage 1 (Detector Processing):\n   • Detector corrections: saturation, superbias, refpix, linearity, dark current, jump detection\n   • Ramp fitting for non-destructive read sequences\n   \n   Stage 2 (Spectroscopic Processing):\n   • WCS assignment (wavelength calibration)\n   • MSA flagging\n   • 2D spectral extraction\n   • Flat-fielding\n   • Pathloss correction\n   • Photometric calibration\n   \n   Stage 3 (1D Extraction):\n   • Optimal 1D extraction (Horne 1986 algorithm)\n   • Removes spatial noise while preserving spectral features\n   • Wavelength registration and resampling\n\n4. Spectral Analysis:\n   • 2D spectrum visualization\n   • Extracted 1D spectrum with error bars\n   • Emission line identification (Hα, Hβ, [OIII], etc.)\n   • Spectral fitting with Bagpipes\n\n5. Emission Lines Detected:\n   • Rest-frame wavelengths defined in jWST_pipeline.py\n   • Redshifted to observed frame\n   • NIRSpec wavelength range: 0.6–5.3 μm at R~1000\n   • Physical ratios from Case B recombination (Osterbrock & Ferland 2006)\n\nNote: Mock data available when JWST pipeline not installed for testing.",
+      "keywords": ["jwst", "spectrum", "spectroscopy", "nirsspec", "extraction", "pipeline"],
+      "entities": ["NIRSpec", "Stage 1/2/3", "Horne 1986", "FITS", "0.6-5.3 μm"],
+      "related_ids": [17, 18, 19, 20]
+    },
+    {
+      "id": 17,
+      "category": "JWST Spectroscopy",
+      "intent": "understand_emission_lines",
+      "question": "What emission lines are typically found in JWST spectra, and what do they tell us?",
+      "answer": "Common JWST Emission Lines (Rest-frame Wavelengths):\n\nHydrogen Balmer Series:\n• Hβ: 0.4861 μm — Baseline for line ratios\n• Hα: 0.6563 μm — Star formation tracer, ~2.86× stronger than Hβ\n• Hγ: 0.4341 μm, Hδ: 0.4102 μm — Weaker components\n\nForbidden [OIII] (Oxygen):\n• [OIII]5007 Å (0.5007 μm) — Ionization indicator, scales with metallicity\n• [OIII]4959 Å (0.4959 μm) — Fixed ratio ~0.34 to 5007 (atomic physics)\n• High [OIII]/Hβ in metal-rich systems\n\nForbidden [NII] (Nitrogen):\n• [NII]6548 Å, 6583 Å — Part of LINER diagnostics\n• [NII]/Hα ratio sensitive to AGN activity\n\nPaschen Series (NIR):\n• Paβ: 1.2822 μm, Paα: 1.8751 μm — Visible in high-z spec\n\nPhysical Insights from Line Ratios:\n• Balmer decrement Hα/Hβ: dust attenuation (Calzetti+2000 law)\n• [OIII]/Hβ: metallicity via O3N2 calibration (Pettini & Pagel 2004)\n• BPT Diagram ([OIII]/Hβ vs [NII]/Hα): star-forming vs AGN vs composite\n• Equivalent widths: age and SFR indicators\n\nIn Astro-AI:\n• Lines automatically identified in 1D spectrum\n• Wavelengths corrected for redshift\n• Bagpipes fits line fluxes to constrain SFR and metallicity\n\nReferences: Osterbrock & Ferland (2006), Pettini & Pagel (2004), Kewley & Dopita (2002).",
+      "keywords": ["emission", "lines", "hydrogen", "forbidden", "oxygen", "nitrogen", "metallicity"],
+      "entities": ["Hα", "Hβ", "[OIII]", "[NII]", "Pettini & Pagel", "BPT diagram"],
+      "related_ids": [16, 18, 19, 22]
+    },
+    {
+      "id": 18,
+      "category": "JWST Spectroscopy",
+      "intent": "dust_attenuation",
+      "question": "How is dust attenuation handled in JWST analysis?",
+      "answer": "Dust Attenuation in Astro-AI:\n\nCalzetti+2000 Dust Law:\n• Parameterised attenuation curve k(λ) [mag/mag]\n• Applies to both stellar continuum and emission lines\n• Covers UV to NIR (0.12–2.2 μm rest-frame)\n\nAttenuation Formula:\nFlux_obs = Flux_intrinsic × 10^(-0.4 × Av × k(λ) / R_V)\n• Av = V-band attenuation [mag]\n• R_V = 4.05 (Calzetti+2000, starburst galaxies)\n• k(λ) = wavelength-dependent curve\n\nLine-specific Attenuation:\n• Lines suffer extra dust: E(B-V)_gas = Av / (R_V × 0.44)\n• Stars see less dust: E(B-V)_stars = 0.44 × E(B-V)_gas\n• Effect: nebular lines fainter than stellar continuum at same intrinsic level\n\nEmpirical Constraints:\n• Balmer decrement Hα/Hβ intrinsic = 2.86 (Case B, T=10⁴K)\n• Observed ratio = 2.86 × 10^(-0.4 × Av × [k(Hα) - k(Hβ)])\n• Measure observed ratio → solve for Av\n\nBagpipes Fitting:\n• Av is a free parameter fit to observed photometry/spectrum\n• Config in Module 2/3: Dust Curve (Calzetti, SMC, MW)\n• Typical range: Av = 0–2 mag\n\nInterpretation:\n• Av ~ 0 mag: dust-free (rare in real galaxies)\n• Av ~ 0.5 mag: modest dust (typical star-forming z~2)\n• Av ~ 1–2 mag: heavily obscured starburst\n• Av > 2 mag: very dusty, ultraluminous infrared galaxies (ULIRGs)\n\nReference: Calzetti et al. 2000, ApJ 533, 682.",
+      "keywords": ["dust", "attenuation", "extinction", "calzetti", "av", "extinction"],
+      "entities": ["Calzetti+2000", "k(λ)", "R_V", "Hα/Hβ", "Av [mag]"],
+      "related_ids": [16, 17, 19, 22]
+    },
+    {
+      "id": 19,
+      "category": "SED Fitting with Bagpipes",
+      "intent": "setup_bagpipes_fitting",
+      "question": "How do I configure Bagpipes SED fitting parameters?",
+      "answer": "Bagpipes Configuration in Astro-AI:\n\n1. Star Formation History (SFH) Model:\n   Option A - Exponential (Recommended):\n   • Age: 0.1–15 Gyr (when did star formation start?)\n   • Tau (τ): 0.3–10 Gyr (timescale of exponential decay)\n   • Formula: SFR(t) ∝ e^(-t/τ)\n   • Best for passive + intermediate galaxies\n\n   Option B - Double Power-Law:\n   • Alpha (α), Beta (β): steepness of rise and fall\n   • More flexible for complex SFH\n   • Better for starbursts and irregulars\n\n2. Stellar Population Priors:\n   • Mass Formed (M_formed): 1–15 dex [log M☉]\n   • Metallicity (Z/Z☉): 0–2.5 [solar units]\n\n3. Dust Model:\n   • Curve: Calzetti (default - starburst), SMC, or Milky Way\n   • Av Range: 0–3 mag (V-band attenuation)\n   • Younger starbursts: higher Av\n   • Old ellipticals: Av ≈ 0\n\n4. Redshift:\n   • Option 1: Fit redshift (if spectrum available)\n   • Option 2: Fix redshift (if photometry only)\n   • Range: 0–10 (z > 10 rare)\n\n5. Nested Sampling (MultiNest):\n   • n_live: Default 400\n   • Higher n_live: more accurate but slower (n_live=800 recommended for publication)\n   • Lower n_live: faster but less precise\n\nUI Workflow (Module 2 - SED Fitting Tab):\n1. Select SFH model\n2. Set priors with sliders\n3. Set dust curve and Av range\n4. Choose fit redshift option\n5. Click \"🔄 Run SED Fitting\"\n6. Results in \"Results\" tab:\n   • stellar_mass ± error [M☉]\n   • sfr ± error [M☉/yr]\n   • age ± error [Gyr]\n   • metallicity ± error [Z/Z☉]\n   • dust Av ± error [mag]\n\nReference: Carnall et al. 2018 (Bagpipes), MNRAS 480, 4379.",
+      "keywords": ["bagpipes", "sfh", "star", "formation", "history", "prior"],
+      "entities": ["SFH", "Exponential", "Power-Law", "MultiNest", "n_live=400", "Carnall+2018"],
+      "related_ids": [12, 15, 20, 22]
+    },
+    {
+      "id": 20,
+      "category": "SED Fitting with Bagpipes",
+      "intent": "interpret_sed_results",
+      "question": "How do I interpret Bagpipes SED fitting results?",
+      "answer": "Interpreting SED Fitting Outputs:\n\nKey Parameters:\n\n1. Stellar Mass (log M*/M☉):\n   • Precision: ±0.15 dex typical (photometric accuracy)\n   • 10^10 M☉ = massive elliptical\n   • 10^9 M☉ = large spiral\n   • 10^8 M☉ = dwarf galaxy\n   • Compare derived mass vs prior range to check fit quality\n\n2. Age (Gyr):\n   • Young: < 1 Gyr (starburst, active star formation)\n   • Intermediate: 1–5 Gyr (post-starburst, passive)\n   • Old: > 5 Gyr (elliptical, quenched)\n   • Error bar indicates posterior uncertainty\n   • If Error ~ Age, posterior multi-modal (poor constraints)\n\n3. SFR (M☉/yr):\n   • High SFR: > 10 M☉/yr (normal star-forming)\n   • Moderate: 1–10 M☉/yr (declining SFR)\n   • Low: < 1 M☉/yr (quenched, old)\n   • Must measure from Hα, [OIII], or UV—SED gives SFR history average\n\n4. Metallicity (Z/Z☉):\n   • Solar: Z/Z☉ ≈ 1.0\n   • Metal-poor: Z/Z☉ < 0.3 (dwarf galaxies, early universe)\n   • Metal-rich: Z/Z☉ > 1.0 (massive galaxies, bulges)\n   • Constrained mainly by UV continuum slope + optical line ratios\n\n5. Dust Av (mag):\n   • Av ≈ 0: dust-free or nearly so (rare)\n   • Av ~ 0.3–0.7: typical star-forming galaxies\n   • Av > 1: dusty starbursts\n   • Check via Balmer decrement if emission lines observed\n\n6. Posterior Samples:\n   • Plot 2D distributions (masses vs age, age vs sfr, etc.)\n   • Covariances revealed (e.g., age–dust degeneracy)\n   • Confidence intervals from percentiles (e.g., 16th–84th)\n\nQuality Checks:\n• Compare model spectrum overlay with observed photometry\n• Look for chi²_min / N_bands (should be ~1 per band)\n• Residuals >3σ indicate bad bands or model mismatch\n• Re-run with different SFH if results seem degenerate\n\nReferenceFrame: Carnall et al. 2018, ApJ 873, 44.",
+      "keywords": ["results", "interpret", "stellar", "mass", "age", "sfr", "metallicity"],
+      "entities": ["log M*", "SFR", "Z/Z☉", "Av", "posterior", "chi²_min"],
+      "related_ids": [19, 21, 22]
+    },
+    {
+      "id": 21,
+      "category": "SED Fitting with Bagpipes",
+      "intent": "sedfit_troubleshoot",
+      "question": "SED fitting diverged or gave unexpected results. What should I do?",
+      "answer": "Troubleshooting SED Fitting:\n\nCommon Issues:\n\n1. Divergence or non-convergence:\n   • Cause: Priors too narrow or no data\n   • Fix:\n     - Relax priors (widen age/mass ranges in sliders)\n     - Increase n_live (e.g., 800 instead of 400)\n     - Check data: are photometric errors realistic?\n\n2. Age–dust degeneracy (age error >> posterior):\n   • Young model with dust can mimic old model with no dust\n   • Common when only optical data available\n   • Fix: Include UV or NIR spectroscopy\n   • Include a prior or informative likelihood\n\n3. Unrealistic metallicity (Z/Z☉ outside 0–2 range):\n   • Usually means insufficient spectroscopy\n   • Fix: Tighten metallicity prior (0.3–2.0 range)\n   • Add emission line diagnostics if available\n\n4. SFR = 0 but age error huge:\n   • Model has freedom in SFH—no strong constraint\n   • Fix: Include Hα or infrared luminosity measurement\n\n5. Error bars too large (unrealistic posterior):\n   • Photometric errors probably too large\n   • Fix: Review input catalogs for outliers or bad measurements\n   • Mask suspect bands\n\nAdvanced Diagnostics:\n• Plot model spectrum vs observed photometry\n• Check for systematic residuals (e.g., all points above model)\n• Inspect corner plots (posterior samples 2D projections)\n• Run parameter recovery tests (inject mock data, re-fit)\n\nRe-running Fit:\n• Change priors in UI → 🔄 Run SED Fitting\n• Cached results will update automatically\n• If still diverged, click \"Clear Cache\" (clears st.session_state)\n\nReference: Carnall et al. 2018, MNRAS 480, 4379; Tips in INSTALL.md.",
+      "keywords": ["fitting", "divergence", "error", "troubleshoot", "prior", "degenera"],
+      "entities": ["n_live", "priors", "chi²", "corner plot", "posterior"],
+      "related_ids": [19, 20, 22]
+    },
+    {
+      "id": 22,
+      "category": "AI Features & OpenRouter",
+      "intent": "ai_insights",
+      "question": "How do I get AI-powered scientific insights on my analysis results?",
+      "answer": "AI-Powered Insights in Astro-AI:\n\nFeature Overview:\n• AI engine powered by OpenAI/OpenRouter (DeepSeek R1 free tier by default)\n• Generates scientific interpretations of simulation/analysis results\n• Integrates with RAG (Retrieval-Augmented Generation) for context\n\n1. Setup (One-time):\n   • Get API key:\n     - OpenAI: https://platform.openai.com/api/keys\n     - OpenRouter: https://openrouter.ai/keys\n   • Add to .streamlit/secrets.toml:\n     OPENROUTER_API_KEY = \"sk-or-v1-...\"\n     OPENROUTER_MODEL = \"deepseek/deepseek-r1:free\"\n   • Restart Streamlit: streamlit run app.py\n\n2. Usage (In UI):\n   • Run any analysis (Cosmic Evolution, Cluster, JWST)\n   • Navigate to 📝 Report & Reflection\n   • Select template or write custom query\n   • AI generates ~1500 token response in 10–30 seconds\n\n3. Available Templates:\n   • \"Cosmic evolution timeline analysis\"\n   • \"Environmental effects on galaxy properties\"\n   • \"Spectroscopic vs photometric constraints\"\n   • \"High-redshift galaxy formation insights\"\n   • Custom queries\n\n4. Result Examples:\n   • Cosmic Evolution:\n     \"Your 21cm signal shows absorption minimum at z=18.5, suggesting cosmic dawn at this epoch. Reionization midpoint appears at z=8.2, consistent with Planck 2020 constraints...\"\n   • Cluster Analysis:\n     \"Red fraction enhancement in clusters (Δf_red ≈ 0.12) implies environmental quenching efficiency ~40% at M*=10.5 M☉, lower than local universe (Peng+2010 z~0.05). Possible evolution or redshift...\"\n\n5. RAG Context:\n   • AI retrieves relevant scientific knowledge (top 3 documents)\n   • Combines retrieved context + your analysis results\n   • Improves accuracy by grounding in astrophysical background\n\nCommon Issues:\n• \"Rate limit (HTTP 429)\" → Wait 5 min and retry\n• \"No API key\" → Set OPENROUTER_API_KEY in secrets.toml\n• Nonsensical response → Check RAG knowledge base or simplify query\n\nNote: All queries return fallback message if real API unavailable (graceful degradation).",
+      "keywords": ["ai", "insights", "openrouter", "deepseek", "rag", "scientific"],
+      "entities": ["OpenRouter", "DeepSeek R1", "RAG", "API key", "secrets.toml"],
+      "related_ids": [23, 24, 25, 26]
+    },
+    {
+      "id": 23,
+      "category": "AI Features & OpenRouter",
+      "intent": "setup_openrouter",
+      "question": "How do I set up OpenRouter with Astro-AI?",
+      "answer": "OpenRouter Setup Guide:\n\n1. Create OpenRouter Account:\n   • Go to https://openrouter.ai\n   • Sign up (free tier available)\n   • Accept terms\n\n2. Get API Key:\n   • Login to dashboard\n   • Navigate to \"Keys\" or \"API\"\n   • Generate new key: click \"Create new key\"\n   • Copy the key (starts with \"sk-or-v1-...\")\n   • KEEP IT SECRET — treat like password\n\n3. Set API Key in Astro-AI:\n   • Create/edit .streamlit/secrets.toml:\n     [secrets]\n     OPENROUTER_API_KEY = \"sk-or-v1-YOUR_KEY_HERE\"\n     OPENROUTER_MODEL = \"deepseek/deepseek-r1:free\"\n\n   • On Streamlit Cloud, add via Secrets management:\n     • App menu → ⚙️ Settings → Secrets\n     • Add same key/value pairs\n\n4. Restart Streamlit:\n   • Local: streamlit run app.py\n   • Cloud: Auto-restarts on secrets change\n\n5. Verify Setup:\n   • Launch app\n   • Check sidebar Environment Status:\n     • ✅ OpenRouter connected?\n     • Check AI status in Report & Reflection\n\nAlternative Models (if you prefer):\n• \"deepseek/deepseek-r1:free\" (default, free, good for reasoning)\n• \"anthropic/claude-3.5-sonnet\" (paid, faster)\n• \"openai/gpt-4o\" (paid, most capable)\n• Full list: https://openrouter.ai/api/v1/models\n\nCosts (OpenRouter):\n• DeepSeek R1 free: $0/token (free tier)\n• Claude 3.5 Sonnet: ~$0.003 per 1K input tokens\n• GPT-4o: ~$0.005 per 1K input tokens\n• Usage typically 800–1500 tokens per analysis\n\nFree Tier Limits:\n• Requests per minute: ~10\n• Total requests: unlimited (free DeepSeek)\n• Careful with batch operations\n\nTroubleshooting:\n• \"Invalid API key\" → Check copy/paste, no spaces\n• \"Unauthorized\" → Key may be expired or deleted\n• \"Rate limited\" → Wait 5 minutes, reduce batch size\n\nReference: https://openrouter.ai/docs",
+      "keywords": ["openrouter", "api", "key", "setup", "deepseek", "apikey"],
+      "entities": ["openrouter.ai", "sk-or-v1-", "secrets.toml", "DeepSeek R1"],
+      "related_ids": [22, 24, 25]
+    },
+    {
+      "id": 24,
+      "category": "AI Features & OpenRouter",
+      "intent": "rag_knowledge",
+      "question": "What is RAG and how does the knowledge base work?",
+      "answer": "RAG System Explained (Retrieval-Augmented Generation):\n\nWhat is RAG?\n• Hybrid AI system: retrieval + generation\n• Retrieves relevant documents from knowledge base\n• Feeds context to LLM for informed responses\n• Much more accurate than LLM alone\n\nAstro-AI RAG Architecture:\n\n1. Knowledge Base:\n   • TF-IDF vectorization of scientific content\n   • ~30 astrophysical explanations (default)\n   • User analysis results automatically stored\n   • File: data/astro_knowledge_base.json + vectors.pkl\n\n2. Retrieval Pipeline:\n   • User query → tokenize + lowercase + remove stopwords\n   • Compute TF-IDF vector from query\n   • Cosine similarity vs all documents\n   • Retrieve top 3 most relevant documents (default top_k=3)\n   • Score typically 0.0–1.0 (0.4 is meaningful match)\n\n3. Context Generation:\n   • Format retrieved docs as \"RETRIEVED CONTEXT\" block\n   • Include relevance score and metadata (type, source module)\n   • Pass to AI along with user query\n\n4. Why It Works:\n   • AI grounded in actual knowledge (reduces hallucinations)\n   • Answers supported by examples\n   • Can cite sources (\"From cosmic_evolution module...\")\n   • Consistent with documented physics\n\nDefault Knowledge Base Content:\n• 21cm intensity mapping and reionization (Pritchard & Loeb)\n• Galaxy clusters and quenching (Peng+2010)\n• JWST NIRSpec capabilities\n• Bagpipes SED fitting methodology\n• Stellar mass functions (Baldry+2012)\n• Emission line diagnostics\n• NIRSpec 21cm power spectrum\n\nAutomatic Knowledge Addition:\n• Each scientific analysis stored with metadata\n• Type: \"scientific_result\"\n• Source: module name (cos_evo, cluster_analyzer, jwst_analyzer)\n• Results automatically retrievable in future AI queries\n\nExample Flow:\nUser Query: \"Why is my cluster red fraction so high?\"\n→ RAG retrieves:\n  [1] Document on red fraction definition & Peng+2010 model (score=0.68)\n  [2] Document on environmental quenching (score=0.55)\n  [3] Document on stellar mass functions (score=0.42)\n→ AI generates answer combining retrieved context + user results\n→ Response mentions Peng+2010 by name and explains physics\n\nCheck RAG Status:\n• Sidebar → Environment Status → Expander\n• Shows: enabled/disabled, document count, vocabulary size\n• API: call get_rag_status() or query_knowledge_base()\n\nReference: rag_system.py, AstroRAGSystem class.",
+      "keywords": ["rag", "retrieval", "augmented", "generation", "knowledge", "base"],
+      "entities": ["TF-IDF", "cosine similarity", "knowledge_base.json", "top_k=3"],
+      "related_ids": [22, 23, 25, 26]
+    },
+    {
+      "id": 25,
+      "category": "Troubleshooting & Errors",
+      "intent": "troubleshoot_import",
+      "question": "I see a 'Module not found' or import error. How do I fix it?",
+      "answer": "Troubleshooting Import Errors:\n\nCommon Import Errors:\n\n1. ModuleNotFoundError: No module named 'astropy'\n   Cause: Astropy not installed\n   Fix:\n   • pip install astropy\n   • Or: pip install -r requirements.txt\n   • Restart Streamlit: streamlit run app.py\n\n2. ModuleNotFoundError: No module named 'py21cmfast'\n   Cause: Optional dependency not installed\n   Fix:\n   • This is optional—app falls back to analytic model\n   • To install: pip install py21cmfast (slow, requires fortran compiler)\n   • Or use mock mode (default)\n\n3. ModuleNotFoundError: No module named 'bagpipes'\n   Cause: Bagpipes not installed\n   Fix:\n   • pip install bagpipes\n   • Bagpipes requires BAGPIPES_DATA environment variable\n   • App attempts auto-setup; see ID #4 for manual setup\n\n4. ImportError: No module named 'jwst_pipeline'\n   Cause: JWST pipeline not installed (optional)\n   Fix:\n   • This is optional—app uses mock JWST data\n   • To install: pip install jwst (large download, ~500MB)\n   • Requires astropy, numpy, scipy, h5py\n\n5. Error setting BAGPIPES environment variables (app.py startup):\n   Cause: Permission issues or invalid temp directory\n   Fix:\n   • Check temp directory exists: /tmp (Linux/macOS) or C:\\Users\\*\\AppData\\Local\\Temp (Windows)\n   • Or set manually: export BAGPIPES_DATA=/your/path\n   • Then restart app\n\nDetect Missing Dependencies:\n• Sidebar → Environment Status → Check✅ boxes\n• Missing packages shown in yellow\n• Strict mode available: checkbox in Environment Status expander\n• When strict=True, app fails if library marked required is missing\n\nFull Diagnostic:\n• Run: python -c \"import module_name\"\n• Gives clear error message\n• Example: python -c \"import py21cmfast\" → ImportError if missing\n\nInstall All Dependencies:\n• requirements.txt: pip install -r requirements.txt (core + common)\n• requirements-full.txt: everything including py21cmfast (may fail on some systems)\n• requirements-minimal.txt: barebone Streamlit + numpy only\n\nClean Install:\n• Remove old environment: rm -rf venv/\n• Create fresh: python -m venv venv\n• Activate: source venv/bin/activate (Linux/macOS) or venv\\Scripts\\activate (Windows)\n• Install: pip install --upgrade pip setuptools wheel\n• Then: pip install -r requirements.txt\n\nStreamlit Cloud Deployment:\n• Ensure dependencies in requirements.txt\n• System packages in packages.txt (apt-get installable)\n• Example packages.txt:\n   libffi-dev\n   gfortran\n   libopenblas-dev\n\nReference: INSTALL.md, feature_flags.py.",
+      "keywords": ["error", "import", "module", "not", "found", "troubleshoot"],
+      "entities": ["ModuleNotFoundError", "pip install", "requirements.txt", "ImportError"],
+      "related_ids": [26, 27, 28, 29]
+    },
+    {
+      "id": 26,
+      "category": "Troubleshooting & Errors",
+      "intent": "app_crash",
+      "question": "The app crashed or is showing a red error box. What does it mean?",
+      "answer": "Understanding and Fixing Streamlit Errors:\n\nStreamlit Error Display:\n• Red box with traceback = script exception\n• Yellow box with warning = non-fatal (app continues)\n• Orange box = deprecated feature\n\nCommon Crashes:\n\n1. \"ValueError: No data loaded\"\n   Cause: Clicked Run Simulation before loading data\n   Fix: Load data first (Data Upload tab → Load Cluster Sample)\n   Code: Always check `if self.data is None` before analysis\n\n2. \"TypeError: unsupported operand type(s)\"\n   Cause: Type mismatch (e.g., adding string + number)\n   Fix: Check data types in your uploaded CSV\n   Example: redshift column should be float, not string\n   Solution: pd.to_numeric(df['redshift'], errors='coerce')\n\n3. \"MemoryError\"\n   Cause: Not enough RAM for simulation\n   Fix: Reduce box_size or resolution parameters\n   Example: use 50 Mpc / 50 HII_DIM instead of 200 Mpc / 128\n\n4. \"RecursionError: maximum recursion depth exceeded\"\n   Cause: Circular dependency or infinite loop in analysis\n   Fix: Restart Streamlit: streamlit run app.py --logger.level=debug\n   Check for circular function calls\n\n5. \"NameError: name 'X' is not defined\"\n   Cause: Variable not initialized or typo\n   Fix: Check session state initialization in _init_session_state()\n   In app.py line ~120:\n   defaults = {\"my_var\": value}  # ensure your var is here\n\n6. \"AttributeError: 'DataFrame' has no attribute 'X'\"\n   Cause: Column name mismatch\n   Fix: Print available columns: print(df.columns)\n   Update column_mapping in ClusterAnalyzer.__init__()\n\n7. \"FileNotFoundError: 'data/file.csv'\"\n   Cause: Uploaded file path not found\n   Fix: Check file uploaded successfully (session_state['uploaded_data'])\n   Debug: print(st.session_state.uploaded_data)\n\nDebug Mode:\n• Enable debug logging:\n   streamlit run app.py --logger.level=debug\n• Prints detailed stack traces\n• Outputs go to terminal, not web UI\n\nClear Cached State:\n• Click browser refresh (⟲) button\n• Or restart Streamlit: Ctrl+C then streamlit run app.py\n• Clears all session_state variables\n• Useful after major code changes\n\nCheck Logs (Streamlit Cloud):\n• App menu → ⓘ Manage app\n• View Logs section\n• Search for ERROR or WARNING\n\nCommon Fixes (in order):\n1. Restart app\n2. Clear browser cache (Ctrl+Shift+Delete)\n3. Check Python version: python --version (must be 3.10+)\n4. Reinstall dependencies: pip install --upgrade -r requirements.txt\n5. Create fresh venv (see ID #25 for clean install)\n\nReport Issues:\n• Include full error traceback\n• Describe steps to reproduce\n• Share your input data (if possible)\n• Contact: redwanrahman2002@outlook.com or camsust@gmail.com\n\nReference: app.py exception handling, logging configuration.",
+      "keywords": ["crash", "error", "debug", "exception", "traceback", "restar"],
+      "entities": ["ValueError", "TypeError", "MemoryError", "RecursionError", "Streamlit"],
+      "related_ids": [25, 27, 28]
+    },
+    {
+      "id": 27,
+      "category": "Troubleshooting & Errors",
+      "intent": "slow_performance",
+      "question": "The app is running very slowly. How can I speed it up?",
+      "answer": "Performance Troubleshooting:\n\nIdentify Bottleneck:\n• Streamlit profiler: streamlit run app.py --logger.level=debug --client.showErrorDetails=True\n• Browser DevTools (F12 → Network tab) to measure load times\n• Check terminal for slow operations (look for timestamps)\n\nOptimization Strategies:\n\n1. Use Caching (@st.cache_data and @st.cache_resource):\n   ✅ Already implemented in app.py for:\n   • Simulation results (1-hour TTL, hash_funcs not needed)\n   • Mock cluster data (30-min TTL)\n   • Analyzer instances (singleton, reused)\n   \n   ❌ If you add new heavy functions:\n   @st.cache_data(ttl=3600)  # cache for 1 hour\n   def expensive_analysis(params):\n       return results\n\n2. Reduce Simulation Parameters:\n   • Box Size: 50 Mpc instead of 200 (8× faster, 512³ vs 128000³ voxels)\n   • Resolution: 50 instead of 128 (17× faster)\n   • Redshift Steps: use 1.0 or 2.0 instead of 0.5 (2× faster)\n\n3. Lazy Figure Generation:\n   ✅ Already done: figures cached, only regenerated on parameter change\n   ❌ If you're creating plots on every rerun:\n   Use @st.cache_data to store figures\n\n4. Reduce Data Size:\n   • Galaxy catalog: keep N < 10,000 for real-time cluster analysis\n   • JPEG compression for images before upload\n   • Downsample spectra if not needed at full resolution\n\n5. Vectorize Operations:\n   ❌ Bad (slow):\n   for i in range(len(df)): result += df.iloc[i]['column']\n   \n   ✅ Good (fast):\n   result = df['column'].sum()\n   # Use NumPy/Pandas vectorized operations\n\n6. Profile Memory Usage:\n   • Check RAM: ps aux | grep streamlit (Linux) or Task Manager (Windows)\n   • If > 2GB: reduce dataset size or split into pages\n   • Use memory_profiler: pip install memory-profiler\n   \n7. Offload to Background:\n   • Use @st.cache_resource for one-time initialization\n   • Avoid re-initializing models on every page load\n   ✅ Cluster/JWST/CosmicEvolution instances cached\n\n8. Pagination:\n   • For large result tables: show top 100 rows, paginate rest\n   • Example: df[i*100:(i+1)*100] with \"Next Page\" button\n\n9. Simplify UX:\n   • Remove unnecessary re-renders (check st.session_state conditions)\n   • Use st.selectbox() instead of st.radio() for many options\n   • Defer heavy plots to expander (only render when opened)\n\n10. Server Resources (Streamlit Cloud):\n    • Free tier: 1 CPU, 512 MB RAM\n    • Upgrade to paid tier for better performance\n    • Or deploy locally on better hardware\n\nMonitoring:\n• Check Network tab (DevTools) for POST times\n• Typical response: 1–3 sec for simulation\n• > 10 sec indicates issue\n\nPy21cmfast Speedup:\n• Use smaller grids (HII_DIM=50, BOX_LEN=50)\n• GPUs can accelerate (not enabled by default)\n• For research: run offline, save results, load in Streamlit\n\nReference: https://docs.streamlit.io/develop/concepts/architecture/caching",
+      "keywords": ["slow", "performance", "speed", "cache", "optimization", "bottleneck"],
+      "entities": ["@st.cache_data", "TTL", "Box Size", "HII_DIM", "DevTools"],
+      "related_ids": [25, 26, 28, 29]
+    },
+    {
+      "id": 28,
+      "category": "Troubleshooting & Errors",
+      "intent": "data_format",
+      "question": "My data is in format X. How do I import it into Astro-AI?",
+      "answer": "Data Format Support:\n\nSupported Formats:\n\n1. CSV (Comma-Separated Values):\n   ✅ Upload directly via UI (Data Upload tab)\n   ✅ Required columns: RA, Dec, redshift, stellar_mass (or log10_stellar_mass)\n   ✅ Optional columns: g_mag, r_mag, cl_id, halo_mass\n   \n   Example CSV:\n   RA,Dec,redshift,stellar_mass,g_mag,r_mag,cl_id\n   150.1,2.0,1.2,1e10,23.5,22.8,cluster_1\n   150.15,2.01,1.21,5e9,24.2,23.1,cluster_1\n   ...\n   \n   Python load:\n   from utils.data_handler import DataHandler\n   dh = DataHandler()\n   df = dh.load_csv('my_catalog.csv')\n\n2. FITS (Flexible Image Transport System):\n   ✅ Upload directly via UI (JWST data)\n   ✅ Supported FITS types:\n   • Multi-HDU FITS with SCI/ERR/DQ extensions (JWST pipeline output)\n   • FITS table (astropy.table.Table)\n   \n   When loaded:\n   • SCI → flux data\n   • ERR → noise/error array\n   • DQ → data quality flags\n   \n   Python load:\n   from astropy.io import fits\n   with fits.open('data.fits') as hdul:\n       sci_data = hdul['SCI'].data\n       err_data = hdul['ERR'].data\n\n3. HDF5 (Hierarchical Data Format):\n   ✅ Python-only (install h5py: pip install h5py)\n   ✅ Call via DataHandler.load_hdf5(filename)\n   ✅ Stores datasets as arrays + attributes\n   \n   Python usage:\n   from utils.data_handler import DataHandler\n   dh = DataHandler(data_dir='data')\n   data = dh.load_hdf5('results.h5')\n   # data['key'].shape, data['attr'], etc.\n\n4. Pickle (Python object serialization):\n   ✅ Python-only (fast for testing)\n   ✅ Load via DataHandler.load_pickle(filename)\n   ✅ Contains Python dicts/lists/arrays\n   \n   Example:\n   data = dh.load_pickle('cached_results.pkl')\n\n5. JSON (JavaScript Object Notation):\n   ✅ Web format, human-readable\n   ✅ Load via DataHandler.load_json(filename)  - NOT YET IMPLEMENTED\n   ✅ Use Python: import json; data = json.load(open(file))\n\nData Conversion Tools:\n\nASCII → CSV:\n• Use Excel or text editor to convert to comma-separated format\n• Or Python:\n  import pandas as pd\n  df = pd.read_csv('data.txt', delim_whitespace=True)\n  df.to_csv('data.csv', index=False)\n\nFITS → CSV:\n  from astropy.io import fits\n  from astropy.table import Table\n  table = Table.read('data.fits')\n  table.write('data.csv', format='ascii.commented_header', overwrite=True)\n\nDatabase (SQLite) → CSV:\n  import sqlite3\n  conn = sqlite3.connect('database.db')\n  df = pd.read_sql('SELECT * FROM table_name', conn)\n  df.to_csv('data.csv', index=False)\n\nColumn Name Requirements:\n\nCluster Analysis Expects:\n• RA [degrees]: Right Ascension\n• Dec [degrees]: Declination\n• redshift: galaxy redshift z\n• stellar_mass [M☉] OR log10_stellar_mass: M* (required)\n• g_mag [mag]: g-band magnitude (optional, for color)\n• r_mag [mag]: r-band magnitude (optional, for color)\n• cl_id: cluster membership label (optional)\n• halo_mass [M☉]: halo mass (optional)\n\nJWST Analysis Expects:\n• FITS HDU structure (SCI, ERR, DQ extensions)\n• 2D array for Stage 2 data\n• 1D wavelength array with WCS header\n\nTip: If column names don't match, update column_mapping in ClusterAnalyzer.__init__() or JWSTAnalyzer.\n\nValidation:\n• Streamlit UI auto-validates column presence\n• Numeric columns must be numeric (not strings)\n• Use pd.to_numeric(df['col'], errors='coerce') to convert\n• NaN values tolerance depends on analysis (typically OK if < 10%)\n\nReference: utils/data_handler.py, DataHandler class.",
+      "keywords": ["data", "format", "csv", "fits", "hdf5", "pickle", "import"],
+      "entities": ["CSV", "FITS", "HDF5", "pickle", "RA", "Dec", "astropy"],
+      "related_ids": [25, 27, 29, 30]
+    },
+    {
+      "id": 29,
+      "category": "Troubleshooting & Errors",
+      "intent": "ai_not_working",
+      "question": "AI features aren't working. What should I check?",
+      "answer": "AI Features Troubleshooting (OpenRouter/DeepSeek):\n\nCheck AI Status:\n1. Sidebar → Environment Status → Expander\n2. Look for OpenRouter/OpenAI API status indicator\n3. Should show: \"API connected\" or \"Simulation mode\"\n\nCommon Issues:\n\n1. \"API key not found or invalid\"\n   Cause: OPENROUTER_API_KEY not set or mistyped\n   Fix:\n   a) Local development:\n      • Create .streamlit/secrets.toml in project root\n      • Add: OPENROUTER_API_KEY = \"sk-or-v1-YOUR_ACTUAL_KEY\"\n      • Restart: streamlit run app.py\n      • Verify: app tries to fetch from secrets\n   \n   b) Streamlit Cloud:\n      • Click app menu (⋯) → Settings → Secrets\n      • Paste same key/value\n      • Changes take effect in ~30 seconds\n   \n   c) Verify key validity:\n      • Login to https://openrouter.ai\n      • Check your keys haven't expired or been revoked\n      • If revoked, generate new key\n\n2. \"Rate limited (HTTP 429)\"\n   Cause: Too many API requests in short time\n   Fix:\n   • Wait 5 minutes before next query\n   • Free tier: ~10 requests/minute limit\n   • Reduce batch size if running multiple analyses\n\n3. \"Connection timeout\"\n   Cause: Network issue or OpenRouter servers down\n   Fix:\n   • Check internet connection\n   • Try again in 1 minute\n   • Check https://openrouter.ai/status\n   • If down, app falls back to simulation mode\n\n4. \"No model specified\"\n   Cause: OPENROUTER_MODEL not set\n   Fix:\n   • Default (in code if not set): \"deepseek/deepseek-r1:free\"\n   • Optional set in secrets.toml:\n     OPENROUTER_MODEL = \"deepseek/deepseek-r1:free\"\n   • Restart after change\n\n5. \"Nonsensical or blank response\"\n   Cause: RAG knowledge base empty or query too vague\n   Fix:\n   • RAG auto-populates with defaults on first run\n   • Try more specific query (e.g., \"What does my red fraction mean?\")\n   • Check RAG status: sidebar → Environment Status → look for document count\n\n6. \"404 Not Found\" for model name\n   Cause: Model name misspelled or deprecated\n   Fix:\n   • Check available models: https://openrouter.ai/api/v1/models\n   • Correct spelling in secrets.toml\n   • Restart app\n   • Examples: \"deepseek/deepseek-r1:free\", \"anthropic/claude-3.5-sonnet\"\n\n7. \"Payment required\" message\n   Cause: Free tier credits exhausted or payment method needed\n   Fix:\n   • Free DeepSeek R1: no payment required, unlimited\n   • Other models (Claude, GPT-4): require payment method on file\n   • Switch to free model: OPENROUTER_MODEL = \"deepseek/deepseek-r1:free\"\n   • Or add payment method to OpenRouter account\n\nDebug Commands:\n\n• Check API connection:\n  python -c \"import os; print(os.getenv('OPENROUTER_API_KEY'))\"\n  # Should print your key (masked in some contexts)\n\n• Test RAG:\n  python\n  from utils.rag_system import get_rag_system\n  rag = get_rag_system()\n  print(rag.get_stats())\n  # Should show document count > 0\n\n• Test OpenRouter directly:\n  import os\n  from openai import OpenAI\n  client = OpenAI(api_key=os.getenv('OPENROUTER_API_KEY'), \n                   base_url='https://openrouter.ai/api/v1')\n  resp = client.chat.completions.create(\n      model='deepseek/deepseek-r1:free',\n      messages=[{'role': 'user', 'content': 'Hi'}]\n  )\n  print(resp.choices[0].message.content)\n  # If works, integration is fine\n\nFallback Behavior:\n• If API fails: \"Simulation mode\" activates\n• Response generated from templates (not AI)\n• Still usable but less personalized\n• User sees warning: \"AI features temporarily unavailable\"\n\nReport AI Issues:\n• Include your OpenRouter account email (NOT your API key!)\n• Share exact error message/trace\n• Note whether other features work (helps isolate problem)\n• Contact: redwanrahman2002@outlook.com\n\nReference: api/openai_integration.py, _configure_provider().",
+      "keywords": ["ai", "api", "openrouter", "key", "error", "rate", "limit", "connection"],
+      "entities": ["OPENROUTER_API_KEY", "secrets.toml", "HTTP 429", "DeepSeek R1"],
+      "related_ids": [22, 23, 24, 25, 26]
+    },
+    {
+      "id": 30,
+      "category": "Data Formats & I/O",
+      "intent": "export_results",
+      "question": "How do I export my analysis results?",
+      "answer": "Exporting Analysis Results:\n\nAvailable Export Formats:\n\n1. CSV (Comma-Separated Values):\n   ✅ Best for: Table data, galaxy catalogs, detection results\n   ✅ Easy to share and open in Excel / Google Sheets\n   \n   Export from module:\n   from utils.data_handler import DataHandler\n   dh = DataHandler(data_dir='output')\n   dh.save_csv(results_df, 'my_results.csv')\n   \n   Via UI:\n   • Run analysis → Results tab → (button to download CSV will be added)\n\n2. JSON (JavaScript Object Notation):\n   ✅ Best for: Nested results, metadata, API interchange\n   ✅ Human-readable, preserves structure\n   \n   Python export:\n   import json\n   from utils.data_handler import _NumpyEncoder\n   with open('results.json', 'w') as f:\n       json.dump(results_dict, f, cls=_NumpyEncoder, indent=2)\n   \n   Note: _NumpyEncoder handles numpy types automatically\n\n3. HDF5 (Hierarchical Data Format):\n   ✅ Best for: Large 3D arrays (brightness temperature cubes)\n   ✅ Keeps metadata alongside data\n   ✅ Binary (compact), efficient for reading subsets\n   \n   Export:\n   from utils.data_handler import DataHandler\n   dh = DataHandler(data_dir='output')\n   data_dict = {\n       'brightness_temp': cube,        # 3D array\n       'redshifts': z_array,            # 1D array\n       'power_spectra': ps_list,        # list of arrays\n   }\n   dh.save_hdf5(data_dict, 'sim_results.h5')\n   \n   Read back:\n   loaded_data = dh.load_hdf5('sim_results.h5')\n   cube = loaded_data['brightness_temp']\n\n4. FITS (for spectra):\n   ✅ Best for: Astronomical spectra, images\n   ✅ Standard in astrophysics\n   \n   Export 1D spectrum:\n   from astropy.table import Table\n   spectrum = Table({\n       'wavelength': wavelength_array,\n       'flux': flux_array,\n       'flux_error': flux_error_array,\n   })\n   spectrum.write('spectrum_1d.fits', overwrite=True)\n\n5. Pickle (Python binary):\n   ✅ Best for: Caching intermediate results\n   ✅ Only use for Python pipelines (not shareable)\n   \n   Export:\n   dh.save_pickle(results_dict, 'cache.pkl')\n\n6. Figure Images (PNG/PDF):\n   ✅ Best for: Publication, presentations\n   ✅ All plots automatically saveable\n   \n   Matplotlib (used in plots):\n   fig, ax = plt.subplots()\n   ax.plot(...)\n   fig.savefig('plot.png', dpi=300, bbox_inches='tight')\n   fig.savefig('plot.pdf')  # vector format, scalable\n   \n   Streamlit UI:\n   • Hover over any plot → download icon (⬇️)\n   • Auto-named by figure type\n\nStep-by-Step Export Workflows:\n\nWorkflow 1: Export Full Cosmic Evolution Results\n```python\nfrom modules.cos_evo.cosmic_evolution import CosmicEvolution\nfrom utils.data_handler import DataHandler, _NumpyEncoder\nimport json\n\ncos_evo = CosmicEvolution({\"H0\": 67.66, \"Om0\": 0.31, \"sigma8\": 0.8})\nresults = cos_evo.run_simulation(box_size=100, resolution=100, ...)\n\n# Save to HDF5 (for brightness temps)\ndh = DataHandler()\ndh.save_hdf5(\n    {'bt_cubes': results['brightness_temperatures'],\n     'redshifts': results['redshifts']},\n    'cosmic_evo.h5'\n)\n\n# Save summary to JSON\nwith open('cosmic_evo_summary.json', 'w') as f:\n    json.dump(\n        {'redshifts': list(results['redshifts']),\n         'global_signals': list(results['global_signals']),\n         'sim_params': results['simulation_params']},\n        f, cls=_NumpyEncoder, indent=2\n    )\n```\n\nWorkflow 2: Export Cluster Analysis Results\n```python\nfrom modules.cluster_analyzer.cluster_analysis import ClusterAnalyzer\n\nca = ClusterAnalyzer()\nca.load_data('catalog.csv')\nca.separate_cluster_field()\nrf_results = ca.compute_red_fraction_vs_mass()\n\n# Export\ndh = DataHandler()\ndh.save_csv(rf_results['cluster_members'], 'cluster_members.csv')\ndh.save_csv(rf_results['field_galaxies'], 'field_galaxies.csv')\n\n# Also save red fraction metrics\nimport json\nwith open('red_fraction_metrics.json', 'w') as f:\n    json.dump(rf_results, f, cls=_NumpyEncoder, indent=2)\n```\n\nWorkflow 3: Export JWST Spectral Fit Results\n```python\nfrom modules.jwst_analyzer.jwst_pipeline import JWSTAnalyzer\n\nja = JWSTAnalyzer()\nja.load_jwst_data('spectrum.fits')\nja.run_pipeline_stage1()\nlja.run_pipeline_stage2()\nlja.run_pipeline_stage3()\n\n# Extract and save 1D spectrum\nspec_1d = ja.extract_1d_spectrum()\n\n# Save as FITS (preserves full header)\nfrom astropy.table import Table\nTable(spec_1d).write('spectrum_1d_extracted.fits', format='fits', overwrite=True)\n\n# Save spectral fit results\nfit_results = ja.run_spectral_fitting()\ndh = DataHandler()\ndh.save_json(fit_results, 'spectral_fits.json')\n```\n\nFile Organization Best Practices:\n```\noutput/\n├── cosmic_evo/\n│   ├── sim_results.h5           # binary, large\n│   ├── summary.json             # metadata\n│   └── plots/\n│       ├── global_signal.png\n│       └── power_spectra.pdf\n├── cluster/\n│   ├── cluster_members.csv\n│   ├── field_galaxies.csv\n│   └── analysis_summary.json\n└── jwst/\n    ├── spectrum_1d.fits\n    └── spectral_fits.json\n```\n\nSharing Results:\n• CSV: email, cloud storage (Google Drive, Dropbox)\n• JSON: web APIs, Slack, GitHub\n• FITS: archival storage, astronomy databases\n• HDF5: within research team (standard for large datasets)\n• PNG: presentations, papers\n• PDF: publication-ready\n\nReference: utils/data_handler.py, DataHandler class methods.",
+      "keywords": ["export", "save", "download", "csv", "json", "hdf5", "fits"],
+      "entities": ["DataHandler", "save_csv", "save_hdf5", "save_json", "_NumpyEncoder"],
+      "related_ids": [28, 29, 16, 7]
+    },
+    {
+      "id": 31,
+      "category": "Data Formats & I/O",
+      "intent": "data_validation",
+      "question": "How do I check if my data is valid before uploading?",
+      "answer": "Data Validation Checklist:\n\nBefore Uploading:\n\n1. File Format Check:\n   ✅ CSV: Open in text editor or Excel → verify comma-separated\n   ✅ FITS: Use Python:\n      from astropy.io import fits\n      fits.info('file.fits')  # Lists all HDUs and their structure\n   ✅ Check file size:\n      • CSV should be < 100 MB (typical upload limit)\n      • FITS < 500 MB recommended\n\n2. Column Names Validation:\n   Required for Cluster Analysis:\n   • RA (degrees)\n   • Dec (degrees)\n   • redshift\n   • stellar_mass OR log10_stellar_mass\n   \n   Python check:\n   import pandas as pd\n   df = pd.read_csv('data.csv')\n   required_cols = ['RA', 'Dec', 'redshift', 'stellar_mass']\n   missing = [c for c in required_cols if c not in df.columns]\n   if missing:\n       print(f\"Missing columns: {missing}\")\n   else:\n       print(\"✅ All required columns present\")\n\n3. Data Type Check:\n   ✅ Numeric columns should be float/int (not strings)\n   \n   Check:\n   df.dtypes  # Print all column types\n   df['redshift'].dtype  # Check single column\n   \n   Fix if needed:\n   df['redshift'] = pd.to_numeric(df['redshift'], errors='coerce')\n   # errors='coerce' converts bad values to NaN\n\n4. Range Validation:\n   RA: 0–360 degrees\n   Dec: –90 to +90 degrees\n   Redshift: 0–15 (for typical galaxy surveys)\n   Stellar mass: 1e6–1e12 M☉ (realistic range)\n   \n   Python check:\n   assert df['RA'].between(0, 360).all(), \"RA out of range\"\n   assert df['Dec'].between(-90, 90).all(), \"Dec out of range\"\n   assert (df['redshift'] >= 0).all(), \"Negative redshift\"\n\n5. Missing Values (NaN) Check:\n   ✅ Some NaN tolerance OK (< 10%)\n   ✅ But some columns critical to be complete\n   \n   Check:\n   df.isnull().sum()  # Count NaNs per column\n   df.isnull().sum() / len(df)  # Fraction\n   \n   Example output:\n   RA                  0  (0.0% missing)\n   Dec                 0  (0.0%)\n   redshift            2  (0.1% missing)\n   stellar_mass       15  (0.8% missing)\n   ← Acceptable\n   \n   Fix (drop rows with key missing):\n   df_clean = df.dropna(subset=['RA', 'Dec', 'redshift', 'stellar_mass'])\n\n6. Duplicate Check:\n   ✅ Some duplicates OK\n   ✅ But excessive duplication suggests error\n   \n   Check:\n   duplicates = df[df.duplicated(subset=['RA', 'Dec', 'redshift'])]\n   print(f\"Found {len(duplicates)} duplicates\")\n   \n   Remove duplicates:\n   df_unique = df.drop_duplicates(subset=['RA', 'Dec'])\n\n7. Outlier Check:\n   ✅ Inspect extreme values\n   \n   Check:\n   df['stellar_mass'].describe()  # Statistics\n   # Look at min, max, mean, std\n   \n   Visualize:\n   import matplotlib.pyplot as plt\n   df['stellar_mass'].hist(bins=50)\n   plt.show()\n   # Should see reasonable distribution (not spike at single value)\n\n8. Unit Consistency:\n   ✅ Verify all quantities use expected units\n   • Magnitudes should be ~18–28 (typical survey range)\n   • Stellar mass in M☉ (not g or kg)\n   • Wavelength in μm or Å (check header comment)\n   \n   Fix headers:\n   df.columns = [f\"{c} [units]\" if c not in df.columns else c for c in needed_units]\n\nFull Validation Script:\n\n```python\nimport pandas as pd\nimport numpy as np\n\ndef validate_cluster_catalog(csv_path):\n    \"\"\"Validate galaxy cluster catalog before upload.\"\"\"\n    \n    print(f\"Validating {csv_path}...\\n\")\n    \n    # Load\n    try:\n        df = pd.read_csv(csv_path)\n    except Exception as e:\n        print(f\"❌ Failed to load CSV: {e}\")\n        return False\n    \n    # Check required columns\n    required = ['RA', 'Dec', 'redshift', 'stellar_mass']\n    missing = [c for c in required if c not in df.columns]\n    if missing:\n        print(f\"❌ Missing columns: {missing}\")\n        return False\n    print(f\"✅ All {len(required)} required columns present\")\n    \n    # Check data types\n    try:\n        df[required] = df[required].apply(pd.to_numeric, errors='coerce')\n    except:\n        print(\"❌ Could not convert columns to numeric\")\n        return False\n    print(f\"✅ All columns are numeric\")\n    \n    # Check ranges\n    if not df['RA'].between(0, 360).all():\n        print(f\"⚠️  RA has {(~df['RA'].between(0, 360)).sum()} values out of range\")\n    if not df['Dec'].between(-90, 90).all():\n        print(f\"⚠️  Dec has {(~df['Dec'].between(-90, 90)).sum()} values out of range\")\n    if (df['redshift'] < 0).any():\n        print(f\"⚠️  {(df['redshift'] < 0).sum()} negative redshifts\")\n    print(f\"✅ Coordinate ranges OK\")\n    \n    # Check NaNs\n    nan_fracs = df[required].isnull().sum() / len(df)\n    if (nan_fracs > 0.1).any():\n        print(f\"⚠️  High NaN fraction in: {nan_fracs[nan_fracs > 0.1]}\")\n    print(f\"✅ NaN fraction < 10% in all columns\")\n    \n    # Check duplicates\n    n_dupes = df[['RA', 'Dec', 'redshift']].duplicated().sum()\n    if n_dupes > 0:\n        print(f\"⚠️  {n_dupes} duplicate entries ({100*n_dupes/len(df):.1f}% of data)\")\n    print(f\"✅ Duplication level acceptable\")\n    \n    print(f\"\\n✅ Validation PASSED: {len(df)} galaxies ready for upload!\")\n    print(f\"\\nSummary:\")\n    print(df[required].describe())\n    \n    return True\n\n# Usage\nvalidate_cluster_catalog('my_catalog.csv')\n```\n\nWhen Validation Fails:\n• Check error message for specific issue\n• Refer to fix commands above\n• If unsure, save cleaned version and re-validate\n• Contact support with sample data if validation still fails\n\nReference: pandas.DataFrame.isnull(), pandas.to_numeric().",
+      "keywords": ["validation", "check", "data", "quality", "nan", "range", "outlie"],
+      "entities": ["CSV", "NaN", "pandas", "pd.to_numeric", "duplicates"],
+      "related_ids": [7, 28, 29, 30]
+    },
+    {
+      "id": 32,
+      "category": "Installation & Setup",
+      "intent": "requirements_versions",
+      "question": "What are the version requirements for key dependencies?",
+      "answer": "Dependency Version Specifications:\n\nCore Requirements:\n• Python: 3.10 or higher (minimum supported for Streamlit Cloud)\n• Streamlit: 1.28+ (latest recommended, auto-installed)\n• NumPy: 1.23+ (stable array operations)\n• Pandas: 1.3+ (data manipulation)\n• SciPy: 1.7+ (scientific computing)\n• Matplotlib: 3.5+ (plotting backend)\n\nAstronomy Stack:\n• Astropy: 5.1+ (FITS, WCS, units)\n• Bagpipes: 2.2+ (SED fitting)\n  - Requires: MultiNest, Numpy, Scipy, Astropy\n  - Manual install: pip install bagpipes (slow build)\n• py21cmfast: 0.3.3+ (21cm simulations, optional)\n  - Requires: Fortran compiler (gfortran)\n  - Slower installation (~10 min)\n\nOptional Dependencies:\n• spaCy: 3.5+ (NLP for FAQ matching, optional)\n• h5py: 3.6+ (HDF5 file I/O, optional)\n• JWST pipeline: 1.8+ (full pipeline, optional)\n  - size: ~500MB, many dependencies\n\nVersion Checking:\n\nCheck Installed Versions:\n```bash\npython --version  # Should be 3.10+\npip show numpy | grep Version  # Check individual package\npython -c \"import numpy; print(numpy.__version__)\"\n```\n\nSpecify Versions in requirements.txt:\n```\nstreamlit==1.32.2\nnumpy==1.24.3\npandas==2.0.3\nscipy==1.11.1\nmatplotlib==3.8.0\nastropy==5.3.2\nbagpipes==2.2.5\nspacy==3.6.1  # Optional NLP\nh5py==3.9.0   # Optional HDF5\n```\n\nPython Version Management:\n\nCheck current version:\n```bash\npython --version\n```\n\nSwitch versions (if multiple installed):\n```bash\npython3.10 --version  # Specify version\npython3.10 -m pip install streamlit  # Install to specific version\n```\n\nUpgrade Python (if < 3.10):\n• Linux: apt-get install python3.10 (Debian/Ubuntu)\n• macOS: brew install python@3.10 (HomeBrew)\n• Windows: Download from python.org, run installer\n\nEnvironment Isolation (Recommended):\n\nCreate virtual environment with specific Python:\n```bash\npython3.10 -m venv venv  # Create venv with Python 3.10\nsource venv/bin/activate\npip install --upgrade pip setuptools wheel\npip install -r requirements.txt\n```\n\nUsing Conda (alternative):\n```bash\nconda create -n astroai python=3.10 scientific_libs\nconda activate astroai\npip install streamlit bagpipes\n```\n\nStreamlit Cloud Constraints:\n• Python version: Determined by requirements.txt runtime.txt\n• If not specified: uses 3.9 (default as of 2025)\n• Force Python 3.10+:\n  • Create runtime.txt in repo root:\n    python-3.10.11\n  • Commit and push to GitHub\n  • Streamlit Cloud detects runtime.txt and uses specified version\n\nHardware Considerations:\n\nMemory for large dependencies:\n• py21cmfast: 2GB+ during install/first run\n• JWST pipeline: 3GB+ dependencies\n• Bagpipes: 1.5GB+ with Fortran compiler\n\nIf install fails on low RAM:\n• Install on machine with 8GB+ RAM\n• Create wheel (.whl) file: pip wheel . -w ./wheels\n• Transfer to target machine and install offline\n• Or use smaller requirements-minimal.txt\n\nBreaking Changes:\n• NumPy 2.0: Removed some deprecated APIs (avoid if using old code)\n• Pandas 2.0: Removed some deprecated APIs\n• Astropy 5.0: Updated WCS API\n• Recommendation: stay on stable versions listed above\n\nReference: requirements.txt, INSTALL.md, setup.py.",
+      "keywords": ["version", "requirements", "python", "pip", "install", "compatibility"],
+      "entities": ["Python 3.10", "NumPy 1.23+", "Pandas 1.3+", "Streamlit 1.28+", "Bagpipes 2.2+"],
+      "related_ids": [1, 2, 3, 4, 25]
+    },
+    {
+      "id": 33,
+      "category": "Platform Overview",
+      "intent": "platform_overview",
+      "question": "What does Astro-AI do?",
+      "alternative_questions": [
+        "What is this project for?",
+        "What analyses are included in Astro-AI?"
+      ],
+      "keywords": ["astro-ai", "overview", "modules", "galaxy evolution"],
+      "answer": "Astro-AI is a Streamlit platform that combines three analysis pipelines: cosmic evolution (21 cm simulation), galaxy cluster environment analysis, and JWST spectrum analysis, plus an integrated dashboard and AI-assisted reporting.",
+      "entities": ["Streamlit", "cosmic evolution", "cluster analysis", "JWST"],
+      "related_ids": [6, 9, 12, 16]
+    },
+    {
+      "id": 34,
+      "category": "Installation & Setup",
+      "intent": "dependency_behavior",
+      "question": "Does Astro-AI require all scientific dependencies to run?",
+      "alternative_questions": [
+        "Will the app work without py21cmfast or bagpipes?",
+        "Is there a fallback mode?"
+      ],
+      "keywords": ["fallback", "optional dependencies", "strict mode"],
+      "answer": "No. The app is designed with fallback simulation paths when optional libraries are missing (for example py21cmfast, bagpipes, JWST pipeline modules). There is also a strict mode option in the sidebar that can enforce required capabilities.",
+      "entities": ["fallback mode", "optional dependencies", "strict mode", "py21cmfast", "bagpipes"],
+      "related_ids": [3, 11, 36, 25]
+    },
+    {
+      "id": 35,
+      "category": "Data Formats & I/O",
+      "intent": "security_paths",
+      "question": "Is there path traversal protection in file I/O utilities?",
+      "alternative_questions": [
+        "How does DataHandler prevent unsafe file paths?",
+        "Are relative path escapes blocked?"
+      ],
+      "keywords": ["path traversal", "safe path", "security"],
+      "answer": "Yes. DataHandler resolves requested paths under its base data directory and rejects paths that escape that root, helping prevent traversal via filenames like ../.. segments.",
+      "entities": ["DataHandler", "path traversal", "_safe_path()"],
+      "related_ids": [30, 31, 7]
+    },
+    {
+      "id": 36,
+      "category": "Installation & Setup",
+      "intent": "feature_flags",
+      "question": "How are optional capabilities detected?",
+      "alternative_questions": [
+        "What does feature_flags detect?",
+        "How does strict mode check dependencies?"
+      ],
+      "keywords": ["feature flags", "detect_capabilities", "strict mode"],
+      "answer": "The feature flag utility imports known optional modules (such as py21cmfast, tools21cm, bagpipes, jwst, astropy), returns availability status, and can raise a runtime error if required capabilities are missing in strict mode.",
+      "entities": ["feature_flags", "detect_capabilities", "strict mode", "py21cmfast", "bagpipes"],
+      "related_ids": [34, 3, 4, 25]
+    },
+    {
+      "id": 37,
+      "category": "Installation & Setup",
+      "intent": "bagpipes_cloud_setup",
+      "question": "How is Bagpipes configured for cloud or read-only environments?",
+      "alternative_questions": [
+        "Why is a temporary bagpipes directory used?",
+        "How does setup_bagpipes.py avoid permission issues?"
+      ],
+      "keywords": ["bagpipes", "temp directory", "permissions", "streamlit cloud"],
+      "answer": "The project creates a writable temporary bagpipes_data directory in the system temp location (e.g., /tmp on Linux/macOS, C:\\Users\\*\\AppData\\Local\\Temp on Windows) and sets BAGPIPES_FILTERS and BAGPIPES_DATA to that location. This is done before importing Bagpipes to avoid permission problems in read-only cloud environments.",
+      "entities": ["bagpipes_data", "BAGPIPES_FILTERS", "BAGPIPES_DATA", "Streamlit Cloud", "setup_bagpipes.py"],
+      "related_ids": [4, 5, 36]
+    },
+    {
+      "id": 38,
+      "category": "User Interface Navigation",
+      "intent": "dashboard_integration",
+      "question": "What does the comparative dashboard integrate?",
+      "alternative_questions": [
+        "How are module results combined in the dashboard?",
+        "What is shown in the integration view?"
+      ],
+      "keywords": ["dashboard", "integration", "timeline", "cross-module"],
+      "answer": "The dashboard combines status and visual summaries from cosmic evolution, cluster analysis, and JWST spectroscopy, including timeline and comparative plots plus a generated integration report structure.",
+      "entities": ["Dashboard", "integration plots", "timeline", "cosmic evolution", "cluster analysis", "JWST"],
+      "related_ids": [6, 9, 12, 16, 25]
+    }
+  ]
+}
