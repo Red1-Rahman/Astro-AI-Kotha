@@ -11,6 +11,7 @@ _BANGLA_CHAR_PATTERN = re.compile(r"[\u0980-\u09FF]")
 # sentences as Banglish.
 _BANGLISH_MARKERS = frozenset(
     {
+        "accha",
         "ami",
         "amar",
         "amader",
@@ -35,7 +36,7 @@ _BANGLISH_MARKERS = frozenset(
         "korbo",
         "korben",
         "koren",
-        "korতে",
+        "korte",
         "lage",
         "lagbe",
         "nai",
@@ -66,6 +67,13 @@ _BANGLISH_MARKERS = frozenset(
         "porjonto",
         "shomporke",
         "somproke",
+        "tumi",
+        "tumar",
+        "tumake",
+        "hayre",
+        "bujhchi",
+        "ektu",
+        "arektu",
     }
 )
 
