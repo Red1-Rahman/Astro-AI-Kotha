@@ -5,10 +5,10 @@ import re
 from enum import StrEnum
 
 _BANGLA_CHAR_PATTERN = re.compile(r"[\u0980-\u09FF]")
+_WORD_PATTERN = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 # Common Banglish/Romanized-Bangla markers.
-# These are intentionally conservative to avoid classifying ordinary English
-# sentences as Banglish.
+# Kept intentionally conservative to reduce false positives on English input.
 _BANGLISH_MARKERS = frozenset(
     {
         "accha",
@@ -52,7 +52,6 @@ _BANGLISH_MARKERS = frozenset(
         "bolben",
         "den",
         "diben",
-        "diben",
         "eta",
         "eita",
         "ota",
@@ -77,7 +76,8 @@ _BANGLISH_MARKERS = frozenset(
     }
 )
 
-_WORD_PATTERN = re.compile(r"[^\W\d_]+", re.UNICODE)
+_MIN_BANGLISH_MARKERS = 2
+_MIN_LATIN_RATIO = 0.8
 
 
 class Language(StrEnum):
@@ -90,67 +90,93 @@ class Language(StrEnum):
 
 
 class LanguageDetectionError(RuntimeError):
-    """Raised when language detection cannot be performed."""
+    """Raised when language detection cannot be completed."""
 
 
 def _extract_words(text: str) -> set[str]:
+    """Extract normalized alphabetic words from text."""
     return {word.lower() for word in _WORD_PATTERN.findall(text)}
 
 
 def _has_bangla_script(text: str) -> bool:
+    """Return whether the text contains Bangla Unicode characters."""
     return bool(_BANGLA_CHAR_PATTERN.search(text))
 
 
 def _is_predominantly_latin(text: str) -> bool:
+    """Return whether alphabetic characters are predominantly Latin."""
     letters = [char for char in text if char.isalpha()]
+
     if not letters:
         return False
 
-    latin_letters = sum("a" <= char.lower() <= "z" for char in letters)
-    return latin_letters / len(letters) >= 0.8
+    latin_count = sum(
+        "a" <= char.lower() <= "z"
+        for char in letters
+    )
+
+    return latin_count / len(letters) >= _MIN_LATIN_RATIO
+
+
+def _detect_latin_language(text: str) -> Language:
+    """Classify predominantly Latin-script text."""
+    words = _extract_words(text)
+    banglish_matches = words & _BANGLISH_MARKERS
+
+    if len(banglish_matches) >= _MIN_BANGLISH_MARKERS:
+        return Language.BANGLISH
+
+    return Language.ENGLISH
 
 
 def detect_language(text: str) -> Language:
     """
-    Detect whether text is English, Bangla, or Banglish.
+    Detect the language of a user query.
 
-    Detection is heuristic and deterministic. Bangla Unicode text is classified
-    as Bangla. Latin-script text containing multiple recognizable Banglish
-    markers is classified as Banglish. Other predominantly Latin text is
-    classified as English.
+    Detection is deterministic and heuristic-based:
+
+    - Bangla Unicode text → ``Language.BANGLA``
+    - Predominantly Latin text with multiple Banglish markers
+      → ``Language.BANGLISH``
+    - Other predominantly Latin text → ``Language.ENGLISH``
+    - Other scripts → ``Language.UNKNOWN``
 
     Args:
-        text: Input text to classify.
+        text: User input to classify.
 
     Returns:
-        The detected Language.
+        Detected language.
 
     Raises:
-        TypeError: If text is not a string.
-        ValueError: If text is empty or contains no meaningful characters.
+        TypeError: If ``text`` is not a string.
+        ValueError: If ``text`` is empty or contains no alphabetic characters.
+        LanguageDetectionError: If an unexpected detection failure occurs.
     """
     if not isinstance(text, str):
         raise TypeError("text must be a string")
 
     normalized = text.strip()
+
     if not normalized:
         raise ValueError("text must not be empty")
 
     if not any(char.isalpha() for char in normalized):
-        raise ValueError("text must contain at least one alphabetic character")
+        raise ValueError(
+            "text must contain at least one alphabetic character"
+        )
 
-    if _has_bangla_script(normalized):
-        return Language.BANGLA
+    try:
+        if _has_bangla_script(normalized):
+            return Language.BANGLA
 
-    if not _is_predominantly_latin(normalized):
-        return Language.UNKNOWN
+        if not _is_predominantly_latin(normalized):
+            return Language.UNKNOWN
 
-    words = _extract_words(normalized)
-    banglish_matches = words & _BANGLISH_MARKERS
+        return _detect_latin_language(normalized)
 
-    # Require at least two markers so ordinary English containing one
-    # overlapping/common token is not classified as Banglish.
-    if len(banglish_matches) >= 2:
-        return Language.BANGLISH
-
-    return Language.ENGLISH
+    except (TypeError, ValueError):
+        raise
+    except Exception as exc:
+        raise LanguageDetectionError(
+            f"Language detection failed: {exc}"
+        ) from exc
