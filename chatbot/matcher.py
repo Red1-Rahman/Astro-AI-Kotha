@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -14,8 +13,9 @@ from chatbot.faq_loader import (
     FAQDatabase,
     load_faq_database,
 )
+from chatbot.language_detector import Language, detect_language
 from chatbot.nlp_processor import NLPProcessor
-
+from chatbot.sanitizer.router import sanitize_query
 
 DEFAULT_SIMILARITY_THRESHOLD = 0.4
 
@@ -26,8 +26,6 @@ class FAQMatcherError(RuntimeError):
 
 @dataclass(frozen=True)
 class FAQMatch:
-    """Result of matching a user query against the FAQ knowledge base."""
-
     success: bool
     score: float
     faq: FAQ | None
@@ -35,24 +33,6 @@ class FAQMatch:
 
 
 class FAQMatcher:
-    """
-    Match user queries against the FAQ knowledge base.
-
-    Matching pipeline:
-
-        user query
-            ↓
-        NLP preprocessing
-            ↓
-        TF-IDF vectorization
-            ↓
-        cosine similarity
-            ↓
-        best FAQ
-            ↓
-        similarity threshold
-    """
-
     def __init__(
         self,
         faq_path: str | None = None,
@@ -61,7 +41,6 @@ class FAQMatcher:
         nlp_processor: NLPProcessor | None = None,
     ) -> None:
         self.faq_path = faq_path or str(DEFAULT_FAQ_PATH)
-
         self.database: FAQDatabase = load_faq_database(self.faq_path)
         self.faqs: list[FAQ] = self.database.faqs
 
@@ -72,11 +51,10 @@ class FAQMatcher:
         )
 
         if not 0.0 <= configured_threshold <= 1.0:
-            raise ValueError(
-                "threshold must be between 0.0 and 1.0"
-            )
+            raise ValueError("threshold must be between 0.0 and 1.0")
 
         self.threshold = configured_threshold
+
         self.nlp_processor = nlp_processor or NLPProcessor(
             self.database.metadata.nlp_model
         )
@@ -85,19 +63,11 @@ class FAQMatcher:
         self.faq_vectors = self._build_index()
 
     def _build_index(self):
-        """Preprocess and vectorize all FAQ records."""
-        questions = [
-            self._build_search_text(faq)
-            for faq in self.faqs
-        ]
+        questions = [self._build_search_text(faq) for faq in self.faqs]
 
         try:
-            processed_questions = self.nlp_processor.process_batch(
-                questions
-            )
-
+            processed_questions = self.nlp_processor.process_batch(questions)
             return self.vectorizer.fit_transform(processed_questions)
-
         except Exception as exc:
             raise FAQMatcherError(
                 f"Unable to build FAQ search index: {exc}"
@@ -105,38 +75,30 @@ class FAQMatcher:
 
     @staticmethod
     def _build_search_text(faq: FAQ) -> str:
+        return " ".join([faq.question, faq.intent, *faq.keywords])
+
+    @staticmethod
+    def _prepare_query(query: str) -> str:
         """
-        Build the searchable text for a FAQ.
+        Detect the query language and apply the corresponding sanitizer.
 
-        The original matcher searched over:
-
-            question + intent + keywords
-
-        That behavior is preserved here.
+        The matcher currently supports English retrieval only. Bangla and
+        Banglish sanitization is performed here, but translation into English
+        belongs to the translation layer and is intentionally not performed
+        by the matcher.
         """
-        return " ".join(
-            [
-                faq.question,
-                faq.intent,
-                *faq.keywords,
-            ]
-        )
+        language = detect_language(query)
+        sanitized_query = sanitize_query(query, language)
+
+        if language is not Language.ENGLISH:
+            raise FAQMatcherError(
+                f"FAQ matching currently supports English queries only; "
+                f"detected language: {language.value}"
+            )
+
+        return sanitized_query
 
     def match(self, query: str) -> FAQMatch:
-        """
-        Find the highest-scoring FAQ for a query.
-
-        Args:
-            query: User's natural-language question.
-
-        Returns:
-            FAQMatch containing the best FAQ if it meets the threshold.
-
-        Raises:
-            TypeError: If query is not a string.
-            ValueError: If query is empty.
-            FAQMatcherError: If matching fails.
-        """
         if not isinstance(query, str):
             raise TypeError("query must be a string")
 
@@ -144,7 +106,8 @@ class FAQMatcher:
             raise ValueError("query must not be empty")
 
         try:
-            processed_query = self.nlp_processor.process(query)
+            prepared_query = self._prepare_query(query)
+            processed_query = self.nlp_processor.process(prepared_query)
 
             if not processed_query:
                 return FAQMatch(
@@ -155,7 +118,6 @@ class FAQMatcher:
                 )
 
             query_vector = self.vectorizer.transform([processed_query])
-
             similarities = cosine_similarity(
                 query_vector,
                 self.faq_vectors,
@@ -176,8 +138,7 @@ class FAQMatcher:
                     score=best_score,
                     faq=None,
                     message=(
-                        "No FAQ matched the query with sufficient "
-                        "confidence."
+                        "No FAQ matched the query with sufficient confidence."
                     ),
                 )
 
@@ -189,22 +150,14 @@ class FAQMatcher:
 
         except (TypeError, ValueError):
             raise
-
         except FAQMatcherError:
             raise
-
         except Exception as exc:
             raise FAQMatcherError(
                 f"FAQ matching failed: {exc}"
             ) from exc
 
     def match_dict(self, query: str) -> dict[str, object]:
-        """
-        Compatibility representation of ``match``.
-
-        This is useful while migrating the existing response builder,
-        which previously consumed a dictionary result.
-        """
         result = self.match(query)
 
         return {
@@ -219,20 +172,12 @@ class FAQMatcher:
         }
 
     def get_faq(self, index: int) -> FAQ:
-        """
-        Return an FAQ by its zero-based index.
-
-        This method is primarily useful for diagnostics and testing.
-        """
         if not 0 <= index < len(self.faqs):
-            raise IndexError(
-                f"FAQ index out of range: {index}"
-            )
+            raise IndexError(f"FAQ index out of range: {index}")
 
         return self.faqs[index]
 
     def __len__(self) -> int:
-        """Return the number of indexed FAQs."""
         return len(self.faqs)
 
 
@@ -241,7 +186,6 @@ def create_matcher(
     *,
     threshold: float | None = None,
 ) -> FAQMatcher:
-    """Create an FAQMatcher using the configured FAQ knowledge base."""
     return FAQMatcher(
         faq_path=faq_path,
         threshold=threshold,
