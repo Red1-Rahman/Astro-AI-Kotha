@@ -1,21 +1,30 @@
 # Astro-AI-Kotha
+
 Voice-enabled support and FAQ interface for Astro-AI in English, Bangla, and Banglish.
 
-### Development installation
+## Development installation
 
-For local development:
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Windows:
+Activate it:
+
+**Windows:**
 
 ```bash
 .venv\Scripts\activate
 ```
 
-Then:
+**Linux / macOS:**
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
 
 ```bash
 python -m pip install --upgrade pip
