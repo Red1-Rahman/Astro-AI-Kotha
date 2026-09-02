@@ -24,7 +24,7 @@ from chatbot.response_builder import (
 )
 from chatbot.sanitizer.router import (
     SanitizerRouterError,
-    sanitize,
+    sanitize_query,
 )
 from speech.synthesizer import (
     SynthesisError,
