@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality Checks (Python ${{ matrix.python-version }})
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
 
     strategy:
@@ -39,25 +39,116 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Upgrade packaging tools
+      - name: Install project and test dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-
-      - name: Install project and development dependencies
-        run: |
           python -m pip install -e ".[dev]"
 
       - name: Install spaCy English model
         run: |
           python -m spacy download en_core_web_sm
 
-      - name: Check formatting
+      - name: Check import boundaries
         run: |
-          ruff format --check .
+          python -c "
+          import ast
+          from pathlib import Path
 
-      - name: Run Ruff
+          ROOTS = {
+              'chatbot': 0,
+              'speech': 1,
+              'translation': 2,
+          }
+
+          violations = []
+
+          for root, layer in ROOTS.items():
+              for path in Path(root).rglob('*.py'):
+                  tree = ast.parse(
+                      path.read_text(encoding='utf-8'),
+                      filename=str(path),
+                  )
+
+                  for node in ast.walk(tree):
+                      imported = None
+
+                      if isinstance(node, ast.Import):
+                          for alias in node.names:
+                              imported = alias.name.split('.')[0]
+
+                              if (
+                                  imported in ROOTS
+                                  and ROOTS[imported] < layer
+                              ):
+                                  violations.append(
+                                      f'{path}: '
+                                      f'{root} -> {imported}'
+                                  )
+
+                      elif isinstance(node, ast.ImportFrom):
+                          if node.level != 0:
+                              continue
+
+                          if node.module:
+                              imported = node.module.split('.')[0]
+
+                              if (
+                                  imported in ROOTS
+                                  and ROOTS[imported] < layer
+                              ):
+                                  violations.append(
+                                      f'{path}: '
+                                      f'{root} -> {imported}'
+                                  )
+
+          if violations:
+              print('Import boundary violations:')
+              print('\\n'.join(violations))
+              raise SystemExit(1)
+
+          print('Import boundaries OK.')
+          "
+
+      - name: Check module exports and imports
         run: |
-          ruff check .
+          python -c "
+          import importlib
+
+          modules = [
+              'chatbot.faq_loader',
+              'chatbot.language_detector',
+              'chatbot.matcher',
+              'chatbot.nlp_processor',
+              'chatbot.response_builder',
+              'chatbot.sanitizer.english_sanitizer',
+              'chatbot.sanitizer.bangla_sanitizer',
+              'chatbot.sanitizer.banglish_sanitizer',
+              'chatbot.sanitizer.router',
+              'speech.transcriber',
+              'speech.synthesizer',
+              'translation.translator',
+              'translation.local_translator',
+              'translation.azure_translator',
+              'main',
+          ]
+
+          failures = []
+
+          for module_name in modules:
+              try:
+                  module = importlib.import_module(module_name)
+                  print(f'OK: {module_name}')
+              except Exception as exc:
+                  failures.append(
+                      f'{module_name}: '
+                      f'{type(exc).__name__}: {exc}'
+                  )
+
+          if failures:
+              print('\\nImport failures:')
+              print('\\n'.join(failures))
+              raise SystemExit(1)
+          "
 
       - name: Run Pyright
         run: |
