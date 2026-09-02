@@ -1,5 +1,5 @@
 # Astro-AI-Kotha
-Voice-enabled support / FAQ interface in English, Bangla and Banglish
+Voice-enabled support and FAQ interface for Astro-AI in English, Bangla, and Banglish.
 
 ### Development installation
 
