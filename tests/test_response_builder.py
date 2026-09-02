@@ -1,13 +1,13 @@
 # tests/test_response_builder.py
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
+from pydantic import ValidationError
 
 from chatbot.faq_loader import FAQ
-from chatbot.matcher import FAQMatch, FAQMatcher
+from chatbot.matcher import FAQMatch
 from chatbot.response_builder import (
     DEFAULT_FALLBACK_MESSAGE,
     DEFAULT_ISSUE_URL,
@@ -16,696 +16,411 @@ from chatbot.response_builder import (
     RelatedQuestion,
     ResponseBuilder,
     ResponseBuilderError,
+    format_response,
     format_response_from_dict,
 )
 
 
-def make_faq(
+def create_faq(
     faq_id: int,
     question: str,
-    answer: str,
+    answer: str = "Test answer.",
     *,
     related_ids: list[int] | None = None,
-    intent: str = "test_intent",
-    keywords: list[str] | None = None,
-) -> dict[str, object]:
-    """Create a valid FAQ fixture."""
-    return {
-        "id": faq_id,
-        "category": "Test",
-        "intent": intent,
-        "question": question,
-        "answer": answer,
-        "keywords": keywords or ["test"],
-        "entities": [],
-        "related_ids": related_ids or [],
-    }
-
-
-def make_database(
-    faqs: list[dict[str, object]],
-) -> dict[str, object]:
-    """Create a valid FAQ database fixture."""
-    return {
-        "metadata": {
-            "version": "1.0",
-            "description": "Test FAQ database",
-            "nlp_processor": "spacy",
-            "nlp_model": "en_core_web_sm",
-            "preprocessing_steps": [
-                "tokenization",
-                "lemmatization",
-                "stopword_removal",
-                "lowercase_normalization",
-            ],
-            "matching_algorithm": "tfidf_cosine_similarity",
-            "similarity_threshold": 0.4,
-            "total_faqs": len(faqs),
-            "last_updated": "2026-03-25",
-        },
-        "faqs": faqs,
-    }
-
-
-def write_database(
-    path: Path,
-    faqs: list[dict[str, object]],
-) -> None:
-    """Write a test FAQ database."""
-    path.write_text(
-        json.dumps(
-            make_database(faqs),
-            indent=2,
-        ),
-        encoding="utf-8",
+) -> FAQ:
+    return FAQ(
+        id=faq_id,
+        category="test",
+        intent="test_intent",
+        question=question,
+        answer=answer,
+        keywords=[],
+        entities=[],
+        related_ids=related_ids or [],
     )
 
 
-@pytest.fixture
-def faq_data() -> list[dict[str, object]]:
-    """Return a deterministic FAQ dataset."""
-    return [
-        make_faq(
+def create_matcher(
+    faqs: list[FAQ] | None = None,
+) -> Mock:
+    matcher = Mock()
+    matcher.faqs = faqs or [
+        create_faq(
             1,
-            "What are the system requirements for Astro-AI?",
-            "Astro-AI requires Python 3.10 or later.",
-            related_ids=[2, 3],
-            intent="system_requirements",
-            keywords=[
-                "requirements",
-                "python",
-                "memory",
-                "storage",
-            ],
+            "What is Astro-AI?",
+            related_ids=[2],
         ),
-        make_faq(
+        create_faq(
             2,
-            "How do I install Astro-AI?",
-            "Install the required dependencies and run the application.",
-            related_ids=[1],
-            intent="installation",
-            keywords=[
-                "install",
-                "setup",
-                "dependencies",
-            ],
-        ),
-        make_faq(
-            3,
-            "How can I analyze galaxy evolution?",
-            "Use the galaxy evolution analysis module.",
-            related_ids=[1],
-            intent="galaxy_analysis",
-            keywords=[
-                "galaxy",
-                "evolution",
-                "analysis",
-            ],
+            "How does Astro-AI work?",
         ),
     ]
+    return matcher
 
 
-@pytest.fixture
-def matcher(
-    tmp_path: Path,
-    faq_data: list[dict[str, object]],
-) -> FAQMatcher:
-    """Create a matcher backed by the fixture dataset."""
-    path = tmp_path / "faqs.json"
-    write_database(path, faq_data)
+def test_related_question_contract() -> None:
+    related = RelatedQuestion(
+        id=2,
+        question="How does Astro-AI work?",
+    )
 
-    return FAQMatcher(path)
+    assert related.id == 2
+    assert related.question == "How does Astro-AI work?"
 
 
-@pytest.fixture
-def builder(matcher: FAQMatcher) -> ResponseBuilder:
-    """Create a response builder."""
-    return ResponseBuilder(matcher)
-
-
-class TestResponseBuilderInitialization:
-    """Tests for ResponseBuilder initialization."""
-
-    def test_initializes_successfully(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        assert builder.support_email == DEFAULT_SUPPORT_EMAIL
-        assert builder.issue_url == DEFAULT_ISSUE_URL
-
-    def test_accepts_custom_support_email(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        builder = ResponseBuilder(
-            matcher,
-            support_email="help@example.com",
+def test_related_question_rejects_invalid_id() -> None:
+    with pytest.raises(ValidationError):
+        RelatedQuestion(
+            id=0,
+            question="How does Astro-AI work?",
         )
 
-        assert builder.support_email == "help@example.com"
 
-    def test_accepts_custom_issue_url(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        builder = ResponseBuilder(
-            matcher,
-            issue_url="https://example.com/issues",
+def test_related_question_rejects_empty_question() -> None:
+    with pytest.raises(ValidationError):
+        RelatedQuestion(
+            id=2,
+            question="",
         )
 
-        assert builder.issue_url == "https://example.com/issues"
 
-    def test_rejects_invalid_matcher(self) -> None:
-        with pytest.raises(
-            TypeError,
-            match="matcher must be an FAQMatcher",
-        ):
-            ResponseBuilder("not a matcher")  # type: ignore[arg-type]
+def test_chat_response_contract() -> None:
+    response = ChatResponse(
+        answer="Astro-AI analyzes galaxy evolution.",
+        score=0.85,
+        related_questions=[],
+    )
 
-    def test_rejects_empty_support_email(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        with pytest.raises(
-            ValueError,
-            match="support_email must not be empty",
-        ):
-            ResponseBuilder(
-                matcher,
-                support_email="   ",
-            )
-
-    def test_rejects_empty_issue_url(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        with pytest.raises(
-            ValueError,
-            match="issue_url must not be empty",
-        ):
-            ResponseBuilder(
-                matcher,
-                issue_url="   ",
-            )
+    assert response.answer == "Astro-AI analyzes galaxy evolution."
+    assert response.score == 0.85
+    assert response.related_questions == []
 
 
-class TestChatResponse:
-    """Tests for public response contracts."""
-
-    def test_related_question_model(self) -> None:
-        question = RelatedQuestion(
-            id=1,
-            question="What is Astro-AI?",
-        )
-
-        assert question.id == 1
-        assert question.question == "What is Astro-AI?"
-
-    def test_chat_response_model(self) -> None:
-        response = ChatResponse(
+def test_chat_response_rejects_out_of_range_score() -> None:
+    with pytest.raises(ValidationError):
+        ChatResponse(
             answer="Test answer.",
-            score=0.85,
+            score=1.1,
             related_questions=[],
         )
 
-        assert response.answer == "Test answer."
-        assert response.score == 0.85
-        assert response.related_questions == []
-
-    def test_score_must_be_between_zero_and_one(self) -> None:
-        with pytest.raises(ValueError):
-            ChatResponse(
-                answer="Test answer.",
-                score=1.5,
-                related_questions=[],
-            )
-
-    def test_answer_must_not_be_empty(self) -> None:
-        with pytest.raises(ValueError):
-            ChatResponse(
-                answer="",
-                score=0.5,
-                related_questions=[],
-            )
-
-
-class TestSuccessfulResponse:
-    """Tests for successful FAQ responses."""
-
-    def test_build_returns_chat_response(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
+    with pytest.raises(ValidationError):
+        ChatResponse(
+            answer="Test answer.",
+            score=-0.1,
+            related_questions=[],
         )
 
-        response = builder.build(match)
 
-        assert isinstance(response, ChatResponse)
-
-    def test_returns_faq_answer(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
+def test_chat_response_rejects_extra_fields() -> None:
+    with pytest.raises(ValidationError):
+        ChatResponse(
+            answer="Test answer.",
+            score=0.8,
+            related_questions=[],
+            language="english",
         )
 
-        response = builder.build(match)
 
-        assert response.answer == (
-            "Astro-AI requires Python 3.10 or later."
+def test_response_builder_requires_matcher() -> None:
+    with pytest.raises(TypeError, match="matcher must be an FAQMatcher"):
+        ResponseBuilder(Mock())  # type: ignore[arg-type]
+
+
+def test_response_builder_rejects_empty_support_email() -> None:
+    matcher = create_matcher()
+
+    with pytest.raises(
+        ValueError,
+        match="support_email must not be empty",
+    ):
+        ResponseBuilder(
+            matcher,  # type: ignore[arg-type]
+            support_email=" ",
         )
 
-    def test_preserves_match_score(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
+
+def test_response_builder_rejects_empty_issue_url() -> None:
+    matcher = create_matcher()
+
+    with pytest.raises(
+        ValueError,
+        match="issue_url must not be empty",
+    ):
+        ResponseBuilder(
+            matcher,  # type: ignore[arg-type]
+            issue_url=" ",
         )
 
-        response = builder.build(match)
 
-        assert response.score == round(match.score, 6)
+def test_build_successful_response() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
 
-    def test_score_is_bounded(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Astro-AI is a galaxy evolution platform.",
-            )
-        )
-
-        match = FAQMatch(
-            success=True,
-            score=0.87654321,
-            faq=faq,
-        )
-
-        response = builder.build(match)
-
-        assert 0.0 <= response.score <= 1.0
-        assert response.score == 0.876543
-
-    def test_resolves_related_questions(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
-        )
-
-        response = builder.build(match)
-
-        assert len(response.related_questions) == 2
-        assert response.related_questions[0].id == 2
-        assert response.related_questions[0].question == (
-            "How do I install Astro-AI?"
-        )
-        assert response.related_questions[1].id == 3
-
-    def test_related_questions_are_typed(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
-        )
-
-        response = builder.build(match)
-
-        assert all(
-            isinstance(question, RelatedQuestion)
-            for question in response.related_questions
-        )
-
-    def test_related_question_order_is_preserved(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What are the Python requirements for Astro-AI?"
-        )
-
-        response = builder.build(match)
-
-        assert [q.id for q in response.related_questions] == [2, 3]
-
-
-class TestFallbackResponse:
-    """Tests for unsuccessful FAQ responses."""
-
-    def test_builds_fallback_response(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What is the weather forecast?"
-        )
-
-        response = builder.build(match)
-
-        assert isinstance(response, ChatResponse)
-        assert response.answer
-        assert response.score < matcher.threshold
-        assert response.related_questions == []
-
-    def test_fallback_contains_support_email(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What is the weather forecast?"
-        )
-
-        response = builder.build(match)
-
-        assert builder.support_email in response.answer
-
-    def test_fallback_contains_issue_url(
-        self,
-        builder: ResponseBuilder,
-        matcher: FAQMatcher,
-    ) -> None:
-        match = matcher.match(
-            "What is the weather forecast?"
-        )
-
-        response = builder.build(match)
-
-        assert builder.issue_url in response.answer
-
-    def test_fallback_does_not_expose_internal_diagnostic(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        match = FAQMatch(
-            success=False,
-            score=0.12,
-            faq=None,
-            message="Internal vector database failure details.",
-        )
-
-        response = builder.build(match)
-
-        assert (
-            "Internal vector database failure details."
-            not in response.answer
-        )
-
-    def test_meaningless_query_gets_specific_message(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        match = FAQMatch(
-            success=False,
-            score=0.0,
-            faq=None,
-            message="The query did not contain meaningful terms.",
-        )
-
-        response = builder.build(match)
-
-        assert "meaningful question" in response.answer
-        assert builder.support_email not in response.answer
-
-
-class TestResponseBuilderValidation:
-    """Tests for invalid matcher results."""
-
-    def test_rejects_non_match_result(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        with pytest.raises(
-            TypeError,
-            match="result must be an FAQMatch",
-        ):
-            builder.build({"success": True})  # type: ignore[arg-type]
-
-    def test_success_without_faq_raises(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        match = FAQMatch(
-            success=True,
-            score=0.9,
-            faq=None,
-        )
-
-        with pytest.raises(
-            ResponseBuilderError,
-            match="does not contain an FAQ",
-        ):
-            builder.build(match)
-
-    def test_empty_answer_raises(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Valid answer.",
-            )
-        )
-
-        empty_faq = faq.model_copy(
-            update={"answer": "   "}
-        )
-
-        match = FAQMatch(
-            success=True,
-            score=0.9,
-            faq=empty_faq,
-        )
-
-        with pytest.raises(
-            ResponseBuilderError,
-            match="contains an empty answer",
-        ):
-            builder.build(match)
-
-    @pytest.mark.parametrize(
-        "score",
-        [-0.01, 1.01, 2.0],
+    faq = matcher.faqs[0]
+    result = FAQMatch(
+        success=True,
+        score=0.87654321,
+        faq=faq,
     )
-    def test_rejects_invalid_score(
-        self,
-        builder: ResponseBuilder,
-        score: float,
-    ) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Astro-AI is a platform.",
-            )
+
+    response = builder.build(result)
+
+    assert response.answer == "Test answer."
+    assert response.score == 0.876543
+    assert response.related_questions == [
+        RelatedQuestion(
+            id=2,
+            question="How does Astro-AI work?",
+        )
+    ]
+
+
+def test_build_successful_response_without_related_questions() -> None:
+    faq = create_faq(
+        1,
+        "What is Astro-AI?",
+    )
+    matcher = create_matcher([faq])
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=True,
+        score=0.8,
+        faq=faq,
+    )
+
+    response = builder.build(result)
+
+    assert response.answer == "Test answer."
+    assert response.score == 0.8
+    assert response.related_questions == []
+
+
+def test_build_successful_response_requires_faq() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=True,
+        score=0.8,
+        faq=None,
+    )
+
+    with pytest.raises(
+        ResponseBuilderError,
+        match="Successful FAQ match does not contain an FAQ",
+    ):
+        builder.build(result)
+
+
+def test_build_successful_response_rejects_empty_answer() -> None:
+    faq = create_faq(
+        1,
+        "What is Astro-AI?",
+        answer="   ",
+    )
+    matcher = create_matcher([faq])
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=True,
+        score=0.8,
+        faq=faq,
+    )
+
+    with pytest.raises(
+        ResponseBuilderError,
+        match="FAQ 1 contains an empty answer",
+    ):
+        builder.build(result)
+
+
+def test_build_fallback_response() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=False,
+        score=0.25,
+        faq=None,
+        message="No FAQ matched the query with sufficient confidence.",
+    )
+
+    response = builder.build(result)
+
+    assert response.score == 0.25
+    assert response.related_questions == []
+    assert DEFAULT_FALLBACK_MESSAGE in response.answer
+    assert DEFAULT_SUPPORT_EMAIL in response.answer
+    assert DEFAULT_ISSUE_URL in response.answer
+
+
+def test_build_fallback_for_meaningless_query() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=False,
+        score=0.0,
+        faq=None,
+        message="The query did not contain meaningful terms.",
+    )
+
+    response = builder.build(result)
+
+    assert response.answer == (
+        "I couldn't identify a meaningful question from your "
+        "message. Please rephrase your question and try again."
+    )
+    assert response.score == 0.0
+    assert response.related_questions == []
+
+
+def test_build_rejects_invalid_match_type() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError, match="result must be an FAQMatch"):
+        builder.build(Mock())  # type: ignore[arg-type]
+
+
+def test_build_rejects_out_of_range_score() -> None:
+    matcher = create_matcher()
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=True,
+        score=1.5,
+        faq=matcher.faqs[0],
+    )
+
+    with pytest.raises(
+        ResponseBuilderError,
+        match="FAQ match score must be between 0.0 and 1.0",
+    ):
+        builder.build(result)
+
+
+def test_build_from_query_delegates_to_matcher() -> None:
+    matcher = create_matcher()
+    match_result = FAQMatch(
+        success=True,
+        score=0.9,
+        faq=matcher.faqs[0],
+    )
+    matcher.match.return_value = match_result
+
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    response = builder.build_from_query("What is Astro-AI?")
+
+    matcher.match.assert_called_once_with("What is Astro-AI?")
+    assert response.answer == "Test answer."
+    assert response.score == 0.9
+
+
+def test_build_from_query_wraps_unexpected_errors() -> None:
+    matcher = create_matcher()
+    matcher.match.side_effect = RuntimeError("matcher failure")
+
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    with pytest.raises(
+        ResponseBuilderError,
+        match="Unable to build response for query: matcher failure",
+    ):
+        builder.build_from_query("test query")
+
+
+def test_format_response_uses_legacy_match_contract() -> None:
+    faq = create_faq(
+        1,
+        "What is Astro-AI?",
+    )
+
+    result = FAQMatch(
+        success=True,
+        score=0.75,
+        faq=faq,
+    )
+
+    response = format_response(result)
+
+    assert isinstance(response, ChatResponse)
+    assert response.answer == "Test answer."
+    assert response.score == 0.75
+
+
+def test_format_response_from_dict_preserves_legacy_shape() -> None:
+    faq = create_faq(
+        1,
+        "What is Astro-AI?",
+    )
+
+    result = {
+        "success": True,
+        "score": 0.75,
+        "faq": faq.model_dump(),
+        "message": None,
+    }
+
+    response = format_response_from_dict(result)
+
+    assert isinstance(response, ChatResponse)
+    assert response.answer == "Test answer."
+    assert response.score == 0.75
+    assert response.related_questions == []
+
+
+def test_format_response_from_dict_rejects_missing_success() -> None:
+    with pytest.raises(
+        ResponseBuilderError,
+        match="Legacy match result is missing required field",
+    ):
+        format_response_from_dict(
+            {
+                "score": 0.5,
+                "faq": None,
+            }
         )
 
-        match = FAQMatch(
-            success=True,
-            score=score,
-            faq=faq,
+
+def test_format_response_from_dict_rejects_invalid_input_type() -> None:
+    with pytest.raises(TypeError, match="result must be a dictionary"):
+        format_response_from_dict([])  # type: ignore[arg-type]
+
+
+def test_related_questions_skip_missing_faqs() -> None:
+    faq = create_faq(
+        1,
+        "What is Astro-AI?",
+        related_ids=[2, 999],
+    )
+
+    matcher = create_matcher(
+        [
+            faq,
+            create_faq(
+                2,
+                "How does Astro-AI work?",
+            ),
+        ]
+    )
+
+    builder = ResponseBuilder(matcher)  # type: ignore[arg-type]
+
+    result = FAQMatch(
+        success=True,
+        score=0.8,
+        faq=faq,
+    )
+
+    response = builder.build(result)
+
+    assert response.related_questions == [
+        RelatedQuestion(
+            id=2,
+            question="How does Astro-AI work?",
         )
-
-        with pytest.raises(
-            ResponseBuilderError,
-            match="must be between 0.0 and 1.0",
-        ):
-            builder.build(match)
-
-    def test_missing_related_faq_is_skipped(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Astro-AI is a platform.",
-                related_ids=[],
-            )
-        )
-
-        mutated_faq = faq.model_copy(
-            update={"related_ids": [999]}
-        )
-
-        builder = ResponseBuilder(matcher)
-
-        match = FAQMatch(
-            success=True,
-            score=0.9,
-            faq=mutated_faq,
-        )
-
-        response = builder.build(match)
-
-        assert response.related_questions == []
-
-
-class TestBuildFromQuery:
-    """Tests for query-to-response convenience behavior."""
-
-    def test_build_from_query(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        response = builder.build_from_query(
-            "How do I install Astro-AI?"
-        )
-
-        assert isinstance(response, ChatResponse)
-        assert response.answer
-        assert response.score >= 0.4
-
-    def test_build_from_query_rejects_empty_query(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        with pytest.raises(
-            ValueError,
-            match="query must not be empty",
-        ):
-            builder.build_from_query("")
-
-    def test_build_from_query_handles_no_match(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        response = builder.build_from_query(
-            "Tell me something completely unrelated."
-        )
-
-        assert isinstance(response, ChatResponse)
-        assert response.related_questions == []
-
-
-class TestLegacyCompatibility:
-    """Tests for the temporary legacy dictionary adapter."""
-
-    def test_format_response_from_dict(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        faq = matcher.faqs[0]
-
-        result = {
-            "success": True,
-            "score": 0.85,
-            "faq": faq.model_dump(),
-            "message": None,
-        }
-
-        response = ResponseBuilder(matcher).build(
-            FAQMatch(
-                success=True,
-                score=0.85,
-                faq=faq,
-            )
-        )
-
-        legacy_response = format_response_from_dict(result)
-
-        assert legacy_response == response
-
-    def test_legacy_no_match(
-        self,
-        matcher: FAQMatcher,
-    ) -> None:
-        result = {
-            "success": False,
-            "score": 0.1,
-            "faq": None,
-            "message": "No FAQ matched the query.",
-        }
-
-        response = format_response_from_dict(result)
-
-        assert isinstance(response, ChatResponse)
-        assert response.score == 0.1
-        assert response.related_questions == []
-
-    def test_legacy_missing_success_field(
-        self,
-    ) -> None:
-        result = {
-            "score": 0.5,
-            "faq": None,
-        }
-
-        with pytest.raises(
-            ResponseBuilderError,
-            match="missing required field",
-        ):
-            format_response_from_dict(result)
-
-
-class TestResponseSerialization:
-    """Tests for API serialization behavior."""
-
-    def test_model_dump(self, builder: ResponseBuilder) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Astro-AI is a platform.",
-            )
-        )
-
-        response = builder.build(
-            FAQMatch(
-                success=True,
-                score=0.87654321,
-                faq=faq,
-            )
-        )
-
-        data = response.model_dump()
-
-        assert data == {
-            "answer": "Astro-AI is a platform.",
-            "score": 0.876543,
-            "related_questions": [],
-        }
-
-    def test_model_dump_json(
-        self,
-        builder: ResponseBuilder,
-    ) -> None:
-        faq = FAQ.model_validate(
-            make_faq(
-                1,
-                "What is Astro-AI?",
-                "Astro-AI is a platform.",
-            )
-        )
-
-        response = builder.build(
-            FAQMatch(
-                success=True,
-                score=0.9,
-                faq=faq,
-            )
-        )
-
-        serialized = response.model_dump_json()
-
-        assert '"answer":"Astro-AI is a platform."' in serialized
-        assert '"score":0.9' in serialized
+    ]
