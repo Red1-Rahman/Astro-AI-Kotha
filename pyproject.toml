@@ -175,6 +175,9 @@ addopts = [
 ]
 
 asyncio_mode = "auto"
+pythonpath = [
+    "."
+]
 
 
 [tool.coverage.run]
