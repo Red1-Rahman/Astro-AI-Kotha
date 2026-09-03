@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, AsyncIterator
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -29,10 +30,12 @@ from chatbot.sanitizer.router import (
 from speech.synthesizer import (
     SynthesisError,
     Synthesizer,
+    create_synthesizer,
 )
 from speech.transcriber import (
     TranscriptionError,
     Transcriber,
+    create_transcriber,
 )
 from translation.translator import (
     TranslationDirection,
@@ -42,6 +45,7 @@ from translation.translator import (
 )
 
 logger = logging.getLogger(__name__)
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_FAQ_PATH = BASE_DIR / "data" / "faqs.json"
@@ -84,7 +88,13 @@ def _env_bool(name: str, default: bool) -> bool:
 
 
 def _load_components() -> AppComponents:
-    """Build all application dependencies."""
+    """
+    Build all application dependencies.
+
+    This function must only be called during application startup or explicit
+    dependency construction in tests. It must never execute during module
+    import.
+    """
 
     faq_path = Path(
         os.getenv(
@@ -93,15 +103,14 @@ def _load_components() -> AppComponents:
         )
     )
 
-    # Load once here so startup fails early if the FAQ
-    # knowledge base is invalid or unavailable.
+    # Validate the FAQ database explicitly at startup.
     faq_database = load_faq_database(faq_path)
 
     matcher = FAQMatcher(faq_path)
 
-    # Keep the loaded database explicitly validated at startup.
-    # FAQMatcher owns its own database/index because that is
-    # the authoritative matcher contract.
+    # FAQMatcher owns its own database/index. Keep this consistency check
+    # explicit so a future matcher/database contract mismatch cannot pass
+    # silently.
     if len(faq_database.faqs) != len(matcher.faqs):
         raise RuntimeError(
             "FAQ database and matcher contain different numbers "
@@ -110,8 +119,8 @@ def _load_components() -> AppComponents:
 
     response_builder = ResponseBuilder(matcher)
 
-    transcriber = Transcriber()
-    synthesizer = Synthesizer()
+    transcriber = create_transcriber()
+    synthesizer = create_synthesizer()
 
     translator = create_translator(
         provider=os.getenv(
@@ -162,7 +171,7 @@ def _build_chat_response(
                 ),
             )
 
-        sanitized_query = sanitize(
+        sanitized_query = sanitize_query(
             query,
             language,
         )
@@ -369,10 +378,37 @@ async def _synthesize_answer(
     )
 
 
+@asynccontextmanager
+async def _lifespan(
+    app: FastAPI,
+) -> AsyncIterator[None]:
+    """
+    Initialize application dependencies during FastAPI startup.
+
+    Importing ``main`` must not construct providers, require credentials,
+    access the network, or load runtime dependencies.
+    """
+
+    if app.state.components is None:
+        logger.info("Initializing application components.")
+
+        app.state.components = _load_components()
+
+        logger.info("Application components initialized.")
+
+    yield
+
+
 def create_app(
     components: AppComponents | None = None,
 ) -> FastAPI:
-    """Create and configure the FastAPI application."""
+    """
+    Create and configure the FastAPI application.
+
+    When ``components`` is supplied, dependency construction is skipped.
+    This allows tests to inject deterministic fakes without credentials,
+    network access, model downloads, or external service initialization.
+    """
 
     app = FastAPI(
         title="Astro-AI-Kotha",
@@ -381,13 +417,15 @@ def create_app(
             "Astro-AI Galaxy Evolution Analysis Platform."
         ),
         version="0.1.0",
+        lifespan=_lifespan,
     )
 
-    app.state.components = (
-        components
-        if components is not None
-        else _load_components()
-    )
+    # Do not construct components here.
+    #
+    # This assignment is intentionally inert during module import. Runtime
+    # components are created by the lifespan handler when the application
+    # actually starts.
+    app.state.components = components
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -410,8 +448,20 @@ def create_app(
             {"query": "What is Astro-AI?"}
         """
 
+        components = app.state.components
+
+        if components is None:
+            logger.error(
+                "Application components are unavailable."
+            )
+
+            raise HTTPException(
+                status_code=503,
+                detail="Application is not ready.",
+            )
+
         return _build_chat_response(
-            app.state.components,
+            components,
             request.query,
         )
 
@@ -451,6 +501,16 @@ def create_app(
 
         components = app.state.components
 
+        if components is None:
+            logger.error(
+                "Application components are unavailable."
+            )
+
+            raise HTTPException(
+                status_code=503,
+                detail="Application is not ready.",
+            )
+
         transcription = await _transcribe_audio(
             components,
             audio,
@@ -484,7 +544,7 @@ def create_app(
             )
 
         try:
-            sanitized = sanitize(
+            sanitized = sanitize_query(
                 transcription,
                 language,
             )
@@ -523,7 +583,7 @@ def create_app(
             )
 
             try:
-                english_query = sanitize(
+                english_query = sanitize_query(
                     english_query,
                     Language.ENGLISH,
                 ).strip()
@@ -592,6 +652,10 @@ def create_app(
     return app
 
 
+# Safe at import time:
+#
+# create_app() only constructs the FastAPI application and registers routes.
+# It does NOT load the FAQ database or construct external providers.
 app = create_app()
 
 
