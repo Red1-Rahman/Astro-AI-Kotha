@@ -3,16 +3,14 @@ from __future__ import annotations
 
 import logging
 import os
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, AsyncIterator
+from typing import Annotated
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from chatbot.faq_loader import load_faq_database
 from chatbot.language_detector import (
     Language,
     LanguageDetectionError,
@@ -46,7 +44,6 @@ from translation.translator import (
 
 logger = logging.getLogger(__name__)
 
-
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_FAQ_PATH = BASE_DIR / "data" / "faqs.json"
 
@@ -62,7 +59,7 @@ class ChatRequest(BaseModel):
 
 @dataclass(slots=True)
 class AppComponents:
-    """Application dependencies composed at startup."""
+    """Fully composed runtime application dependencies."""
 
     matcher: FAQMatcher
     response_builder: ResponseBuilder
@@ -71,7 +68,10 @@ class AppComponents:
     synthesizer: Synthesizer
 
 
-def _env_bool(name: str, default: bool) -> bool:
+def _env_bool(
+    name: str,
+    default: bool,
+) -> bool:
     """Read a boolean environment variable."""
 
     value = os.getenv(name)
@@ -89,11 +89,9 @@ def _env_bool(name: str, default: bool) -> bool:
 
 def _load_components() -> AppComponents:
     """
-    Build all application dependencies.
+    Compose the complete application dependency graph.
 
-    This function must only be called during application startup or explicit
-    dependency construction in tests. It must never execute during module
-    import.
+    This function is intentionally NOT called during module import.
     """
 
     faq_path = Path(
@@ -103,23 +101,16 @@ def _load_components() -> AppComponents:
         )
     )
 
-    # Validate the FAQ database explicitly at startup.
-    faq_database = load_faq_database(faq_path)
+    matcher = FAQMatcher(
+        faq_path,
+    )
 
-    matcher = FAQMatcher(faq_path)
-
-    # FAQMatcher owns its own database/index. Keep this consistency check
-    # explicit so a future matcher/database contract mismatch cannot pass
-    # silently.
-    if len(faq_database.faqs) != len(matcher.faqs):
-        raise RuntimeError(
-            "FAQ database and matcher contain different numbers "
-            "of FAQ records."
-        )
-
-    response_builder = ResponseBuilder(matcher)
+    response_builder = ResponseBuilder(
+        matcher,
+    )
 
     transcriber = create_transcriber()
+
     synthesizer = create_synthesizer()
 
     translator = create_translator(
@@ -152,6 +143,28 @@ def _load_components() -> AppComponents:
     )
 
 
+def _get_components(
+    app: FastAPI,
+) -> AppComponents:
+    """
+    Return composed dependencies, composing them lazily once.
+
+    Importing ``main`` does not invoke this function.
+    """
+
+    components = getattr(
+        app.state,
+        "components",
+        None,
+    )
+
+    if components is None:
+        components = _load_components()
+        app.state.components = components
+
+    return components
+
+
 def _build_chat_response(
     components: AppComponents,
     query: str,
@@ -165,9 +178,9 @@ def _build_chat_response(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "The text chat endpoint currently accepts English "
-                    "queries. Use /api/chat/voice for Bangla or Banglish "
-                    "voice input."
+                    "The text chat endpoint currently accepts "
+                    "English queries. Use /api/chat/voice for "
+                    "Bangla or Banglish voice input."
                 ),
             )
 
@@ -274,7 +287,7 @@ async def _translate_to_english(
     components: AppComponents,
     text: str,
 ) -> str:
-    """Translate a Bangla/Banglish query into English."""
+    """Translate Bangla/Banglish input into English."""
 
     try:
         result = await components.translator.translate(
@@ -378,36 +391,17 @@ async def _synthesize_answer(
     )
 
 
-@asynccontextmanager
-async def _lifespan(
-    app: FastAPI,
-) -> AsyncIterator[None]:
-    """
-    Initialize application dependencies during FastAPI startup.
-
-    Importing ``main`` must not construct providers, require credentials,
-    access the network, or load runtime dependencies.
-    """
-
-    if app.state.components is None:
-        logger.info("Initializing application components.")
-
-        app.state.components = _load_components()
-
-        logger.info("Application components initialized.")
-
-    yield
-
-
 def create_app(
     components: AppComponents | None = None,
 ) -> FastAPI:
     """
-    Create and configure the FastAPI application.
+    Create the FastAPI application.
 
-    When ``components`` is supplied, dependency construction is skipped.
-    This allows tests to inject deterministic fakes without credentials,
-    network access, model downloads, or external service initialization.
+    If components are supplied, they are used directly. This is the
+    dependency-injection path used by tests.
+
+    If components are not supplied, runtime composition is deferred until
+    the first request.
     """
 
     app = FastAPI(
@@ -417,14 +411,8 @@ def create_app(
             "Astro-AI Galaxy Evolution Analysis Platform."
         ),
         version="0.1.0",
-        lifespan=_lifespan,
     )
 
-    # Do not construct components here.
-    #
-    # This assignment is intentionally inert during module import. Runtime
-    # components are created by the lifespan handler when the application
-    # actually starts.
     app.state.components = components
 
     @app.get("/health")
@@ -440,25 +428,9 @@ def create_app(
     async def chat(
         request: ChatRequest,
     ) -> ChatResponse:
-        """
-        Backward-compatible text FAQ endpoint.
+        """Process an English text FAQ query."""
 
-        Example request:
-
-            {"query": "What is Astro-AI?"}
-        """
-
-        components = app.state.components
-
-        if components is None:
-            logger.error(
-                "Application components are unavailable."
-            )
-
-            raise HTTPException(
-                status_code=503,
-                detail="Application is not ready.",
-            )
+        components = _get_components(app)
 
         return _build_chat_response(
             components,
@@ -472,44 +444,9 @@ def create_app(
             File(...),
         ],
     ) -> Response:
-        """
-        Process an audio query through the complete voice pipeline.
+        """Process an audio query through the voice pipeline."""
 
-        English:
-
-            audio
-            -> STT
-            -> language detection
-            -> English sanitizer
-            -> FAQ matching
-            -> answer
-            -> TTS
-
-        Bangla/Banglish:
-
-            audio
-            -> STT
-            -> language detection
-            -> language-specific sanitizer
-            -> translation to English
-            -> English sanitizer
-            -> FAQ matching
-            -> English answer
-            -> translation to Bangla
-            -> TTS
-        """
-
-        components = app.state.components
-
-        if components is None:
-            logger.error(
-                "Application components are unavailable."
-            )
-
-            raise HTTPException(
-                status_code=503,
-                detail="Application is not ready.",
-            )
+        components = _get_components(app)
 
         transcription = await _transcribe_audio(
             components,
@@ -652,10 +589,13 @@ def create_app(
     return app
 
 
-# Safe at import time:
+# Import boundary:
 #
-# create_app() only constructs the FastAPI application and registers routes.
-# It does NOT load the FAQ database or construct external providers.
+# Creating the ASGI application object is safe.
+# It only declares routes and stores ``None`` as the dependency graph.
+#
+# Actual dependency composition happens inside _get_components() when the
+# first runtime request requires it.
 app = create_app()
 
 
