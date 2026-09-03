@@ -19,7 +19,7 @@ class TranslationDirection(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class TranslationResult:
-    """Result returned by a translation provider."""
+    """Provider-neutral translation result."""
 
     text: str
     source_language: str
@@ -28,7 +28,7 @@ class TranslationResult:
 
 
 class TranslationError(RuntimeError):
-    """Base exception for all translation failures."""
+    """Base exception for translation failures."""
 
 
 class LocalTranslationError(TranslationError):
@@ -40,7 +40,7 @@ class AzureTranslationError(TranslationError):
 
 
 class Translator(Protocol):
-    """Provider-independent translation interface."""
+    """Provider-independent translation contract."""
 
     async def translate(
         self,
@@ -52,12 +52,7 @@ class Translator(Protocol):
 
 
 class FallbackTranslator:
-    """
-    Try local translation first and Azure only when local translation fails.
-
-    This class deliberately falls back only on TranslationError. Programming
-    errors such as TypeError are not silently converted into an Azure request.
-    """
+    """Try the primary translator and optionally fall back."""
 
     def __init__(
         self,
@@ -67,7 +62,9 @@ class FallbackTranslator:
         enabled: bool = True,
     ) -> None:
         if not isinstance(enabled, bool):
-            raise TypeError("enabled must be a boolean")
+            raise TypeError(
+                "enabled must be a boolean"
+            )
 
         self._primary = primary
         self._fallback = fallback
@@ -79,18 +76,32 @@ class FallbackTranslator:
         direction: TranslationDirection,
     ) -> TranslationResult:
         if not isinstance(text, str):
-            raise TypeError("text must be a string")
+            raise TypeError(
+                "text must be a string"
+            )
 
-        if not isinstance(direction, TranslationDirection):
-            raise TypeError("direction must be a TranslationDirection value")
+        if not isinstance(
+            direction,
+            TranslationDirection,
+        ):
+            raise TypeError(
+                "direction must be a TranslationDirection value"
+            )
 
         try:
-            return await self._primary.translate(text, direction)
+            return await self._primary.translate(
+                text,
+                direction,
+            )
+
         except TranslationError:
             if not self._enabled:
                 raise
 
-        return await self._fallback.translate(text, direction)
+        return await self._fallback.translate(
+            text,
+            direction,
+        )
 
 
 def create_translator(
@@ -99,31 +110,36 @@ def create_translator(
     fallback_enabled: bool = True,
     azure_key: str | None = None,
     azure_region: str | None = None,
-    azure_endpoint: str = "https://api.cognitive.microsofttranslator.com",
+    azure_endpoint: str = (
+        "https://api.cognitive.microsofttranslator.com"
+    ),
 ) -> Translator:
-    """
-    Create the configured translation provider.
+    """Create the configured translation provider."""
 
-    Supported providers:
-    - local
-    - azure
+    normalized_provider = (
+        provider.strip().lower()
+    )
 
-    When provider is ``local`` and fallback is enabled, Azure is used only
-    when local translation raises TranslationError.
-    """
-
-    normalized_provider = provider.strip().lower()
-
-    if normalized_provider not in {"local", "azure"}:
+    if normalized_provider not in {
+        "local",
+        "azure",
+    }:
         raise ValueError(
             "provider must be one of: 'local', 'azure'"
         )
 
-    if not isinstance(fallback_enabled, bool):
-        raise TypeError("fallback_enabled must be a boolean")
+    if not isinstance(
+        fallback_enabled,
+        bool,
+    ):
+        raise TypeError(
+            "fallback_enabled must be a boolean"
+        )
 
     if normalized_provider == "azure":
-        from translation.azure_translator import AzureTranslator
+        from translation.azure_translator import (
+            AzureTranslator,
+        )
 
         return AzureTranslator(
             api_key=azure_key,
@@ -131,14 +147,18 @@ def create_translator(
             endpoint=azure_endpoint,
         )
 
-    from translation.local_translator import LocalTranslator
+    from translation.local_translator import (
+        LocalTranslator,
+    )
 
     local = LocalTranslator()
 
     if not fallback_enabled:
         return local
 
-    from translation.azure_translator import AzureTranslator
+    from translation.azure_translator import (
+        AzureTranslator,
+    )
 
     azure = AzureTranslator(
         api_key=azure_key,
