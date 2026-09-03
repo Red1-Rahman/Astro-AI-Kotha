@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Protocol
 
 from openai import AsyncOpenAI
 
@@ -17,33 +18,25 @@ class SynthesisError(RuntimeError):
 
 @dataclass(frozen=True)
 class SynthesisResult:
-    """
-    Provider-neutral text-to-speech result.
-
-    Attributes:
-        audio: Synthesized audio bytes.
-        content_type: MIME type of the returned audio.
-    """
+    """Provider-neutral text-to-speech result."""
 
     audio: bytes
     content_type: str
 
 
-class Synthesizer:
-    """Provider-neutral contract for text-to-speech implementations."""
+class Synthesizer(Protocol):
+    """Provider-neutral text-to-speech contract."""
 
-    async def synthesize(self, text: str) -> SynthesisResult:
+    async def synthesize(
+        self,
+        text: str,
+    ) -> SynthesisResult:
         """Synthesize text into audio."""
-        raise NotImplementedError
+        ...
 
 
-class FishSynthesizer(Synthesizer):
-    """
-    Fish Audio text-to-speech implementation through Vercel AI Gateway.
-
-    Provider-specific client details remain inside this class. Callers only
-    receive the provider-neutral ``SynthesisResult`` contract.
-    """
+class FishSynthesizer:
+    """Fish Audio TTS implementation through Vercel AI Gateway."""
 
     def __init__(
         self,
@@ -54,20 +47,32 @@ class FishSynthesizer(Synthesizer):
         voice: str | None = None,
     ) -> None:
         if not model.strip():
-            raise ValueError("model must not be empty")
+            raise ValueError(
+                "model must not be empty"
+            )
 
         if not base_url.strip():
-            raise ValueError("base_url must not be empty")
+            raise ValueError(
+                "base_url must not be empty"
+            )
 
-        if voice is not None and not voice.strip():
-            raise ValueError("voice must not be empty when provided")
+        if (
+            voice is not None
+            and not voice.strip()
+        ):
+            raise ValueError(
+                "voice must not be empty when provided"
+            )
 
-        resolved_api_key = api_key or os.getenv("AI_GATEWAY_API_KEY")
+        resolved_api_key = (
+            api_key
+            or os.getenv("AI_GATEWAY_API_KEY")
+        )
 
         if not resolved_api_key:
             raise ValueError(
-                "AI_GATEWAY_API_KEY must be provided through the "
-                "api_key argument or environment variable"
+                "AI_GATEWAY_API_KEY must be provided through "
+                "the api_key argument or environment variable"
             )
 
         self.model = model
@@ -79,27 +84,21 @@ class FishSynthesizer(Synthesizer):
             base_url=base_url,
         )
 
-    async def synthesize(self, text: str) -> SynthesisResult:
-        """
-        Synthesize speech from text.
+    async def synthesize(
+        self,
+        text: str,
+    ) -> SynthesisResult:
+        """Synthesize speech from text."""
 
-        Args:
-            text: Text to synthesize.
-
-        Returns:
-            Provider-neutral synthesized audio result.
-
-        Raises:
-            TypeError: If text has an invalid type.
-            ValueError: If text is empty or whitespace-only.
-            SynthesisError: If the provider request fails or returns empty
-                audio.
-        """
         if not isinstance(text, str):
-            raise TypeError("text must be a string")
+            raise TypeError(
+                "text must be a string"
+            )
 
         if not text.strip():
-            raise ValueError("text must not be empty")
+            raise ValueError(
+                "text must not be empty"
+            )
 
         try:
             request_kwargs: dict[str, object] = {
@@ -110,15 +109,18 @@ class FishSynthesizer(Synthesizer):
             if self.voice is not None:
                 request_kwargs["voice"] = self.voice
 
-            response = await self._client.audio.speech.create(
-                **request_kwargs,
+            response = (
+                await self._client.audio.speech.create(
+                    **request_kwargs,
+                )
             )
 
             audio = await response.aread()
 
             if not audio:
                 raise SynthesisError(
-                    "Text-to-speech provider returned empty audio"
+                    "Text-to-speech provider returned "
+                    "empty audio"
                 )
 
             content_type = getattr(
@@ -130,7 +132,10 @@ class FishSynthesizer(Synthesizer):
                 "audio/mpeg",
             )
 
-            if not isinstance(content_type, str) or not content_type.strip():
+            if (
+                not isinstance(content_type, str)
+                or not content_type.strip()
+            ):
                 content_type = "audio/mpeg"
 
             return SynthesisResult(
@@ -140,8 +145,10 @@ class FishSynthesizer(Synthesizer):
 
         except (TypeError, ValueError):
             raise
+
         except SynthesisError:
             raise
+
         except Exception as exc:
             raise SynthesisError(
                 f"Text-to-speech synthesis failed: {exc}"
@@ -154,8 +161,9 @@ def create_synthesizer(
     model: str = DEFAULT_MODEL,
     base_url: str = DEFAULT_BASE_URL,
     voice: str | None = None,
-) -> FishSynthesizer:
-    """Create the configured Fish text-to-speech synthesizer."""
+) -> Synthesizer:
+    """Create the configured text-to-speech provider."""
+
     return FishSynthesizer(
         api_key=api_key,
         model=model,
